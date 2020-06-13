@@ -14,6 +14,7 @@ import numpy as np
 
 
 # Definición de Parámetros
+# Orden Cultivos: Palta, Uva de Mesa, Manzanas, Peras, Aceitunas, Uva vino, aceites
 c = 7 #cantidad de cultivos
 t = 10 #cantidad de periodos
 h_total = 16000 #cantidad de hectareas disponibles, revisar porque depende de t
@@ -59,13 +60,16 @@ H_min = [
 H_cien = [
 
 ]
-p = Model("planificacion") # Se define el modelo
+
 t_i = 0 #Se define el problema para el tiempo inicial, variable auxiliar
 
 # Parametros que estan en el informe
 Prom_i_h = 0 # ingreso promedio hombres
 Prom_i_m = 0 # ingreso promedio mujeres 
 CBS = 0 #capacidad bocas subterraneas
+Nac = [] #tasa de nacimiento por rango etareo
+
+p = Model("planificacion") # Se define el modelo
 
 # VARIABLES
 
@@ -144,40 +148,40 @@ h = p.addVars(t, c, name="h", vtype=GRB.CONTINUOUS)
 p.setObjective(quicksum(PBI[i] for i in range(t)))
 
 #Restriccion 1 Definición de PBI
-restr_1 = p.addConstrs(PBI[i] = Emp[i] + GG[t] +  Inv_priv[i] + Imp[i] + Exp[i] for i in range(t))
+restr_1 = p.addConstrs(PBI[i] = Emp[i] + GG[i] +  Inv_priv[i] + Imp[i] + Exp[i] for i in range(t))
 
 #Restriccion 2 Gastos en empleo para el año t  
-restr_2 = p.addConstrs(Emp[i] = 0.75*(quicksum(QM[i, e] * Prom_i_m) + QH[i, e] * Prom_i_h + 300* (QM[i, 4] + QH[i, 4] for e in range(2, 4)) for i in range(t)))
+restr_2 = p.addConstrs(Emp[i] = 0.75*quicksum(QM[i, e] * Prom_i_m + QH[i, e] * Prom_i_h) + 300 * (QM[i, 4] + QH[i, 4]) for e in range(2, 4) for i in range(t))
 
 #Restriccion 3 Gasto del Gobierno para el periodo t
-restr_3 = p.addConstrs(GG[i] = quicksum(200 * (QM[i, e] + QH[i, e]) + Inv_pub[t] for e in range(5)) for i in range(t))
+restr_3 = p.addConstrs(GG[i] = 200 * quicksum(QM[i, e] + QH[i, e]) + Inv_pub[i] for e in range(5) for i in range(t))
 
 #Restriccion 4 Inversión pública realizada el año t
-restr_4 = p.addConstrs(Inv_pub[i] = quicksum(220000 * (X[i] + Y[i]) + QCA[i] * 2000 for i in range(t)))
+restr_4 = p.addConstrs(Inv_pub[i] = 220000 * quicksum(X[i] + Y[i]) + 2000 * QCA[i]  for i in range(t))
 
 #Restriccion 5 Inversión privada realizada el año t
-restr_5 = p.addConstrs(Inv_priv[i] = 0.05 * PBI[i-1 for i in range(t-1)])
+restr_5 = p.addConstrs(Inv_priv[i] = 0.05 * PBI[i-1] for i in range(t-1))
 
 #Restriccion 6 Gasto realizado por la importación de bienes en el periodo t 
-restr_6 = p.addConstrs(Imp[i] = quicksum((QM[i, e] + QH[i, e]) * 1680 for e in range(5)) for i in range(t))
+restr_6 = p.addConstrs(Imp[i] = 1680 * quicksum(QM[i, e] + QH[i, e]) for e in range(5) for i in range(t))
 
 #Restriccion 7 Total de población para el periodo t
-restr_7 = p.addConstrs(Pob[i] = quicksum(QM[i, e] + QH[i, e] for e in range(5)) for i in range(t))
+restr_7 = p.addConstrs(Pob[i] = quicksum(QM[i, e] + QH[i, e]) for e in range(5) for i in range(t))
 
 #Restriccion 8 Total de profesionales para el periodo t
-restr_8 = p.addConstrs(Prof[i] = quicksum((QM[i, e] * 0.03 + QH[i, e] * 0.02 for e in range(3,5)) for i in range(t))
+restr_8 = p.addConstrs(Prof[i] =  quicksum(0.03 * QM[i, e] + 0.02 * QH[i, e])  for e in range(3,5) for i in range(t))
 
 #Restriccion 9 Inmigración
 
 #Restriccion 10 Población para el próximo periodo
-restr_10_H = p.addConstrs(quicksum(QM[i, e] for e range(5)) = quicksum(QM[i - 1, e] for e in range(5)) - quicksum(QM[i - 1, e] * 0.00505 for e in range(5)) + quicksum(QM[i - 1 ,e] * 0.0005 * Nac[i]) for i in range(1, t))
-restr_10_M = p.addConstrs(quicksum(QH[i, e] for e range(5)) = quicksum(QH[i - 1, e] for e in range(5)) - quicksum(QM[i - 1, e] * 0.00505 for e in range(5)) + quicksum(QM[i - 1 ,e] * 0.0005 * Nac[i]) for i in range(1, t))
-
+restr_10_H = p.addConstrs(quicksum(QM[i, e]) = quicksum(QM[i - 1, e]) - quicksum(QM[i - 1, e] * 0.00505) + quicksum(QM[i - 1 ,e]) * 0.0005 * Nac[i] for e in range(5) for i in range(1, t))
+restr_10_M = p.addConstrs(quicksum(QH[i, e]) = quicksum(QH[i - 1, e]) - quicksum(QM[i - 1, e] * 0.00505) + quicksum(QM[i - 1 ,e]) * 0.0005 * Nac[i] for e in range(5) for i in range(1, t))
+# restr_10_M = p.addConstrs(quicksum(QH[i, e] for e range(5)) = quicksum(QH[i - 1, e] for e in range(5)) - quicksum(QM[i - 1, e] * 0.00505 for e in range(5)) + quicksum(QM[i - 1 ,e]) * 0.0005 * Nac[i]) for i in range(1, t))
 #Restriccion 11 La inversión pública no puede superar el 2% del PBI del año anterior
 restr_11 = p.addConstrs(Inv_priv[i] <= 0.02 * PIB[i-1] for i in range(1,t))
 
 #Restriccion 12 Cantidad de casas que hay en la comuna 
-restr_12 = p.addConstrs(QC[i] = quicksum(QM[i, e] + QH[i, e] for e in range(5)) * 0.25 for i in range(t))
+restr_12 = p.addConstrs(QC[i] =   0.25 * quicksum(QM[i, e] + QH[i, e]) for e in range(5) for i in range(t))
 
 #Restriccion 13 Respetar cantidad total de agua disponible para todos los periodos
 restr_13 = p.addConstrs(W[i] = W[i-1] + Wl[i] + WS[i] + WR[i] - WA[i] - Wi[i] - WP[i] for i in range(t))
@@ -187,8 +191,8 @@ restr_13 = p.addConstrs(W[i] = W[i-1] + Wl[i] + WS[i] + WR[i] - WA[i] - Wi[i] - 
 # restr_14_abajo = p.addConstrs(QPP[i] * CPP[i] * )
 
 #Restriccion 15 Respetar conexión a alcantarillas (Mínimo 60% de las casas)
-restr_15_arriba = p.addConstrs(QCA[i] >= 0.6 * quicksum(QM[i, e] + QH[i, e] for e in range(5)) * 0.25 for i in range(t))
-restr_15_abajo = p.addConstrs(QCA[i] <= quicksum(QM[i, e] + QH[i, e] for e in range(5)) * 0.25 for i in range(t))
+restr_15_arriba = p.addConstrs(QCA[i] >=  (0.25 * 0.6 * quicksum(QM[i, e] + QH[i, e]) for e in range(5)) for i in range(t))
+restr_15_abajo = p.addConstrs(QCA[i] <= (0.25 * quicksum(QM[i, e] + QH[i, e]) for e in range(5)) for i in range(t))
 
 # #Restriccion 16 Agua total recuperada por la planta de afluentes
 # restr_16 = p.addConstrs(WR[i] = 0.8 * Y[i] * WP[i] * 4 for i in range(t))
@@ -197,7 +201,7 @@ restr_15_abajo = p.addConstrs(QCA[i] <= quicksum(QM[i, e] + QH[i, e] for e in ra
 # restr_17 = p.addConstrs(WS[i] = QPP[i] * CBS) for i in range(t)
 
 # Restriccion 18 Cantidad de plantas de potabilizacion
-rest_18 = p.addConstrs(QPP[i] = QPP[i-1 + X[i]] for i in range(t))
+rest_18 = p.addConstrs(QPP[i] = QPP[i-1] + X[i] for i in range(t))
 
 # Restriccion 19 Aumento de capacidad al crear planta de potabilizacion
 rest_19 = p.addConstrs(CPP[i] = CPP[i-1] + 60*X[i] for i in range(t))
