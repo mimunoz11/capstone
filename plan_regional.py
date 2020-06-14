@@ -1,4 +1,5 @@
-#Modelación planificación regional
+# Modelación planificación regional
+
 from gurobipy import *
 import numpy as np
 
@@ -14,6 +15,19 @@ import numpy as np
 
 
 # Definición de Parámetros
+
+mujeres = [3900, 2600, 5980, 7020, 6500]
+hombres = [3960, 2200, 5940, 5940, 3960]
+Nac = [0, 30, 120, 40, 0] #tasa de nacimiento por rango etareo
+
+# Agro-industria, Comercio, Gobierno, Profesionales, Desempleados, Pensionados
+# ojo hay que incluir los profesionales externos que son 960 y ganan 3000
+ingreso_mensual = [550, 550, 450, 2500, 200, 300]
+dist_empleos_m = [0.55, 0.2, 0.07, 0.03, 0.15]
+dist_empleos_h = [0.65, 0.1, 0.07, 0.02, 0.16]
+Prom_i_h = 526 # ingreso promedio hombres
+Prom_i_m = 549 # ingreso promedio mujeres
+
 # Orden Cultivos: Palta, Uva de Mesa, Manzanas, Peras, Aceitunas, Uva vino, aceites
 c = 7 #cantidad de cultivos
 t = 10 #cantidad de periodos
@@ -53,6 +67,7 @@ variaciones_precio = [
 costos = [0.6, 0.65, 0.8, 0.66, 0.7, 0.45, 0.65] #costos de cada cultivo, porcentaje respecto al precio
 inversion = [211.200, 45.500, 4.800, 23.460, 89.100, 302.500, 315.000] #inversion para plantar cada cultivo
 precio = [2640.00, 650.00, 120.00,345.00,1485.00,2750.00,4500.00]
+
 H_min = [
 
 ]
@@ -63,11 +78,7 @@ H_cien = [
 
 t_i = 0 #Se define el problema para el tiempo inicial, variable auxiliar
 
-# Parametros que estan en el informe
-Prom_i_h = 0 # ingreso promedio hombres
-Prom_i_m = 0 # ingreso promedio mujeres 
-CBS = 0 #capacidad bocas subterraneas
-Nac = [] #tasa de nacimiento por rango etareo
+CBS = 10 #capacidad bocas subterraneas
 
 p = Model("planificacion") # Se define el modelo
 
@@ -120,14 +131,14 @@ CPA = p.addVars(t, name="Capacidad Planta Afluentes", vtype=GRB.INTEGER)
 WP = p.addVars(t, name="Agua Potable", vtype=GRB.CONTINUOUS)
 # Agua recuperada por la planta de afluentes en el periodo t
 WR = p.addVars(t, name="Agua Recuperada Alcantarillado", vtype=GRB.CONTINUOUS)
-# Agua subterranea disponible en el periodo t
-WS = p.addVars(t, name="Agua Subterranea", vtype=GRB.CONTINUOUS)
+# Agua subterranea disponible en el periodo t, ES PARAMETRO
+WS = 3942000
 # Agua disponible para la agricultura que se consume el periodo t
 WA = p.addVars(t, name="Agua Agricultura", vtype=GRB.CONTINUOUS)
-# Agua que se consume en el sector de la industria el periodo t
-WI = p.addVars(t, name="Agua Industria", vtype=GRB.CONTINUOUS)
-# Agua de lluvia disponible para el periodo t
-WL = p.addVars(t, name="Agua Lluvia", vtype=GRB.CONTINUOUS)
+# Agua que se consume en el sector de la industria ES PARAMETRO
+WI = 3942000
+# Agua de lluvia disponible para el periodo t, SON PARAMETROS
+WL = [780, 800, 850, 830, 750, 650, 750, 725, 600, 550]
 # Agua total disponible para el periodo t
 W = p.addVars(t, name="Agua Total", vtype=GRB.CONTINUOUS)
 
@@ -144,12 +155,13 @@ h = p.addVars(t, c, name="h", vtype=GRB.CONTINUOUS)
 
 # FUNCION OBJETIVO
 
-p.setObjective(quicksum(PBI[i] for i in range(t)))
+p.setObjective(quicksum(PBI[i] for i in range(t)), GRB.MAXIMIZE)
 
 #Restriccion 1 Definición de PBI
+restr_1_0 = p.addConstr(PBI[0] == 269280000)
 restr_1 = p.addConstrs(PBI[i] == Emp[i] + GG[i] +  Inv_priv[i] + Imp[i] + Exp[i] for i in range(t))
 
-#Restriccion 2 Gastos en empleo para el año t  
+#Restriccion 2 Gastos en empleo para el año t
 restr_2 = p.addConstrs(Emp[i] == 0.75 * quicksum(QM[i, e] * Prom_i_m + QH[i, e] * Prom_i_h for e in range(2, 4)) + 300 * (QM[i, 4] + QH[i, 4]) for i in range(t))
 
 #Restriccion 3 Gasto del Gobierno para el periodo t
@@ -157,15 +169,17 @@ restr_3 = p.addConstrs(GG[i] == 200 * quicksum(QM[i, e] + QH[i, e] for e in rang
 
 #Restriccion 4 Inversión pública realizada el año t
 # Se supone que el gasto se reparte en 3 años, pero esta como si se repartiera solo en uno
-restr_4 = p.addConstrs(Inv_pub[i] == 660000 * (X[i] + Y[i]) + 2000 * QCA[i] for i in range(t))
+restr_4 = p.addConstrs(Inv_pub[i] == 660000 * (X[i] + Y[i]) + 2000 * (QCA[i] - QCA[i-1]) for i in range(1, t))
 
 #Restriccion 5 Inversión privada realizada el año t
 restr_5 = p.addConstrs(Inv_priv[i] == 0.05 * PBI[i-1] for i in range(1, t-1))
 
-#Restriccion 6 Gasto realizado por la importación de bienes en el periodo t 
+#Restriccion 6 Gasto realizado por la importación de bienes en el periodo t
 restr_6 = p.addConstrs(Imp[i] == 1680 * quicksum(QM[i, e] + QH[i, e] for e in range(5)) for i in range(t))
 
 #Restriccion 7 Total de población para el periodo t
+restr_7_m = p.addConstrs(QM[0, e] == mujeres[e] for e in range(5))
+restr_7_h = p.addConstrs(QH[0, e] == hombres[e] for e in range(5))
 restr_7 = p.addConstrs(Pob[i] == quicksum(QM[i, e] + QH[i, e] for e in range(5)) for i in range(t))
 
 #Restriccion 8 Total de profesionales para el periodo t
@@ -182,11 +196,12 @@ restr_8 = p.addConstrs(Prof[i] ==  quicksum(0.03 * QM[i, e] + 0.02 * QH[i, e]  f
 #Restriccion 11 La inversión pública no puede superar el 2% del PBI del año anterior
 restr_11 = p.addConstrs(Inv_priv[i] <= 0.02 * PBI[i-1] for i in range(1,t))
 
-#Restriccion 12 Cantidad de casas que hay en la comuna 
+#Restriccion 12 Cantidad de casas que hay en la comuna
 restr_12 = p.addConstrs(QC[i] ==   0.25 * quicksum(QM[i, e] + QH[i, e] for e in range(5))  for i in range(t))
 
 #Restriccion 13 Respetar cantidad total de agua disponible para todos los periodos
-restr_13 = p.addConstrs(W[i] == W[i-1] + WL[i] + WS[i] + WR[i] - WA[i] - WI[i] - WP[i] for i in range(1, t))
+restr_13_0 = p.addConstr(W[0] == WL[0] + WS)
+restr_13 = p.addConstrs(W[i] == W[i-1] + WL[i] + WS + WR[i] - WA[i] - WI - WP[i] for i in range(1, t))
 
 #Restriccion 14 Respetar producción de agua potable (120 ltpersona * dia  y debe cubrir como mínimo al 60% de la población)
 restr_14_arriba = p.addConstrs(quicksum(QM[i, e] + QH[i, e] for e in range(5)) >= 0.6 * WP[i] for i in range(t))
@@ -199,9 +214,8 @@ restr_15_abajo = p.addConstrs(QCA[i] <= 0.25 * quicksum(QM[i, e] + QH[i, e] for 
 
 # #Restriccion 16 Agua total recuperada por la planta de afluentes
 restr_16 = p.addConstrs(WR[i] == 0.8 * WP[i] for i in range(t))
- 
-#  #Restriccion 17 Agua total obtenida de las bocas de agua subterránea
-restr_17 = p.addConstrs(WS[i] == QPP[i] * CBS for i in range(t))
+
+# Restriccion 17 no va porque el agua subterranea es un parametro
 
 # Restriccion 18 Cantidad de plantas de potabilizacion
 rest_18 = p.addConstrs(QPP[i] == QPP[i-1] + X[i] for i in range(1, t))
@@ -213,5 +227,7 @@ rest_19 = p.addConstrs(CPP[i] == CPP[i-1] + 60 * X[i] for i in range(1, t))
 rest_20 = p.addConstrs(QPA[i] == QPA[i-1] + Y[i] for i in range(1, t))
 
 # Restricción 21 Aumento de capacidad al crear planta de afluentes
-rest_21 = p.addConstrs(CPA[i] == CPA[i-1] + 60 * X[i] for i in range(1, t))
+rest_21 = p.addConstrs(CPA[i] == CPA[i-1] + 60 * Y[i] for i in range(1, t))
 
+p.optimize()
+#p.display()
