@@ -30,6 +30,7 @@ Prom_i_m = 549 # ingreso promedio mujeres
 MOD_min =  [0.74, 2.48, 2.88, 3.35,  1.04, 1.16, 0.22] # Mano de obra minima por hectarea
 Dolares_ton=[2640, 650, 230, 345, 1485, 2750, 4500] #precio venta por cada tonelada, ordenadas según excel
 kg_hectarea=[10000,25000,58000,45000,7000,7800,1000,0]
+
 # Orden Cultivos: Palta, Uva de Mesa, Manzanas, Peras, Aceitunas, Uva vino, aceites
 c = 7 #cantidad de cultivos
 t = 10 #cantidad de periodos
@@ -117,18 +118,18 @@ QCA = p.addVars(t, lb = 0.0, name="Cantidad Alcantarillas", vtype=GRB.INTEGER)
 # Cantidad de bocas subterraneas en el periodo t
 QBS = p.addVars(t, lb = 0.0, name="Cantidad Bocas Subterraneas", vtype=GRB.INTEGER)
 # Cantidad de plantas potabilizadoras en el periodo t
-QPP = p.addVars(t, lb = 0.0, name="Cantidad Plantas Potabilizadoras", vtype=GRB.INTEGER)
-# Cantidad de plantas de afluentes en el periodo t
-QPA = p.addVars(t, lb = 0.0, name="Cantidad Plantas Afluentes", vtype=GRB.INTEGER)
+QPP = p.addVars(t, lb = 4.0, name="Cantidad Plantas Potabilizadoras", vtype=GRB.INTEGER)
+# Cantidad de plantas de Aguas Servidas en el periodo t
+QPA = p.addVars(t, lb = 0.0, name="Cantidad Plantas Aguas Servidas", vtype=GRB.INTEGER)
 # Capacidad de planta potable para el periodo t
-CPP = p.addVars(t, lb = 0.0, name="Capacidad Planta Potable", vtype=GRB.INTEGER)
-# Capacidad de planta afluentes para el periodo t
-CPA = p.addVars(t, lb = 0.0, name="Capacidad Planta Afluentes", vtype=GRB.INTEGER)
+CPP = p.addVars(t, lb = 240.0, name="Capacidad Planta Potable", vtype=GRB.INTEGER)
+# Capacidad de planta Aguas Servidas para el periodo t
+CPA = p.addVars(t, lb = 0.0, name="Capacidad Planta Aguas Servidas", vtype=GRB.INTEGER)
 
 ## Variables para calcular el Agua
 # Agua potable que consumen las casa en el periodo t
 WP = p.addVars(t, lb = 0.0, name="Agua Potable", vtype=GRB.CONTINUOUS)
-# Agua recuperada por la planta de afluentes en el periodo t
+# Agua recuperada por la planta de Aguas Servidas en el periodo t
 WR = p.addVars(t, lb = 0.0, name="Agua Recuperada Alcantarillado", vtype=GRB.CONTINUOUS)
 # Agua subterranea disponible en el periodo t, ES PARAMETRO
 WS = 3942000
@@ -144,8 +145,8 @@ W = p.addVars(t, lb = 0.0, name="Agua Total", vtype=GRB.CONTINUOUS)
 ## Variables de decision
 #Cantidad de plantas potabilizadoras que se construyen en el periodo t
 X = p.addVars(t, lb = 0.0, name="Plantas Potabilizadoras", vtype=GRB.BINARY)
-#Cantidad de plantas afluentes que se construyen en el periodo t
-Y = p.addVars(t, lb = 0.0, name="Plantas Afluentes", vtype= GRB.BINARY)
+#Cantidad de plantas Aguas Servidas que se construyen en el periodo t
+Y = p.addVars(t, lb = 0.0, name="Plantas Aguas Servidas", vtype= GRB.BINARY)
 
 ## Variables de los productores
 # cantidad de hect a plantar en periodo t del cultuvo c
@@ -165,7 +166,7 @@ zeta = p.addVars(r, lb =0.0, name="zeta", vtype= GRB.BINARY)
 
 # FUNCION OBJETIVO
 
-p.setObjective(quicksum(PBI[i] for i in range(t)), GRB.MAXIMIZE)
+p.setObjective(quicksum(PBI[i] + H[1,0] + H[1,1] + H[1,2] + H[1,3]+ H[1,4] + H[1,5] + H[1,6]     for i in range(t)), GRB.MAXIMIZE)
 
 
 # Restriccion 1 Definición de PBI
@@ -222,21 +223,21 @@ restr_14_prod = p.addConstrs(WP[i] == QPP[i] for i in range(t)) # FALTA MULTIPLI
 restr_15_abajo = p.addConstrs(QCA[i] >=  0.25 * 0.6 * quicksum(QM[i, e] + QH[i, e] for e in range(5)) for i in range(t))
 restr_15_arriba = p.addConstrs(QCA[i] <= 0.25 * quicksum(QM[i, e] + QH[i, e] for e in range(5)) for i in range(t))
 
-# Restriccion 16 Agua total recuperada por la planta de afluentes
+# Restriccion 16 Agua total recuperada por la planta de Aguas Servidas
 restr_16 = p.addConstrs(WR[i] == 0.8 * WP[i] for i in range(t))
 
 # Restriccion 17 no va porque el agua subterranea es un parametro
 #
 # Restriccion 18 Cantidad de plantas de potabilizacion
-# rest_18 = p.addConstrs(QPP[i] == QPP[i-1] + X[i] for i in range(1, t))
+#rest_18 = p.addConstrs(QPP[i] == QPP[i-1] + X[i] for i in range(1, t))
 
 # Restriccion 19 Aumento de capacidad al crear planta de potabilizacion
 rest_19 = p.addConstrs(CPP[i] == CPP[i-1] + 60 * X[i] for i in range(1, t))
 
-# Restricción 20 Cantidad de plantas de afluentes
+# Restricción 20 Cantidad de plantas de Aguas Servidas
 rest_20 = p.addConstrs(QPA[i] == QPA[i-1] + Y[i] for i in range(1, t))
 
-# Restricción 21 Aumento de capacidad al crear planta de afluentes
+# Restricción 21 Aumento de capacidad al crear planta de Aguas Servidas
 rest_21 = p.addConstrs(CPA[i] == CPA[i-1] + 60 * Y[i] for i in range(1, t))
 
 # # Restricciones duales productor
@@ -270,10 +271,11 @@ restr_28 = p.addConstrs(beta[k-2] <= M * zeta[k] for k in range(2, r))
 restr_31 = p.addConstrs( H[1, k - 2] - H_min[k - 2] <= M * (1 - zeta[k]) for k in range(2, r))
 
 # Restriccion Exportaciones
-# restr_32 = p.addConstrs(Exp[u] == (quicksum(precio[j] * (1 - costos[j]) for j in range(c)) * H[1, i] - inversion[i] for i in range(c)) for u in range(1, t)) # revisar range para u
+#restr_32 = p.addConstrs(Exp[u] == (quicksum(precio[j] * (1 - costos[j]) for j in range(c)) * H[1, i] - inversion[i] for i in range(c)) for u in range(1, t)) # revisar range para u
 
 p.update()
 p.optimize()
 
+p.printAttr('X')
 #p.feasibility()
-#p.display()
+# p.display()
