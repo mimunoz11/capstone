@@ -21,7 +21,7 @@ Prom_i_m = 549 # ingreso promedio mujeres
 
 # Orden Cultivos: Palta, Uva de Mesa, Manzanas, Peras, Aceitunas, Uva vino, aceites
 c = 7 #cantidad de cultivos
-t = 10 #cantidad de periodos
+t = 11 #cantidad de periodos
 r = 9 #cantidad de variables de holgura
 H_total = 34749.49 #cantidad de hectareas disponibles, revisar porque depende de t
 H_inicial = [2000, 600, 775.86, 666.67, 2142.86, 2564.10, 10000.00, 16000.00]
@@ -89,6 +89,8 @@ Inv_priv = p.addVars(t, lb = 0.0, name="Inv_priv", vtype=GRB.CONTINUOUS)
 Imp = p.addVars(t, lb = 0.0, name="Importaciones", vtype=GRB.CONTINUOUS)
 # Ganancia de los exportaciones para el año t
 Exp = p.addVars(t, lb = 0.0, name="Exportaciones", vtype=GRB.CONTINUOUS)
+# Gastos totales para el periodo t
+Gastos = p.addVars(t, lb = 0.0, name="Gastos", vtype=GRB.CONTINUOUS)
 
 ## Variables para calcular la cantidad de gente y casas
 # # Población total para el periodo t
@@ -124,7 +126,7 @@ WA = p.addVars(t, lb = 0.0, name="Agua Agricultura", vtype=GRB.CONTINUOUS)
 # Agua que se consume en el sector de la industria ES PARAMETRO
 WI = 1296000
 # Agua de lluvia disponible para el periodo t, SON PARAMETROS, CAMBIAR A LITROS
-WL = [780, 800, 850, 830, 750, 650, 750, 725, 600, 550]
+WL = [750, 780, 800, 850, 830, 750, 650, 750, 725, 600, 550]
 # Agua total disponible para el periodo t
 W = p.addVars(t, lb = 0.0, name="Agua Total", vtype=GRB.CONTINUOUS)
 
@@ -157,87 +159,94 @@ p.setObjective(quicksum(PBI[i]   for i in range(t)), GRB.MAXIMIZE)
 
 
 # Restriccion 1 Definición de PBI
-#restr_1_0 = p.addConstr(PBI[0] == 5500 * 48000)
-restr_1 = p.addConstrs(PBI[i] == - Emp[i] - GG[i] - Inv_priv[i] - Imp[i] + Exp[i] for i in range(1, t)) # Sacamos la variable Exp
+restr_1_0 = p.addConstr(PBI[0] == 5500 * Pob[0])
+restr_1 = p.addConstrs(PBI[i] ==  Exp[i] - Gastos[i]  for i in range(1, t)) # Sacamos la variable Exp
 
-# Restriccion 2 Gastos en empleo para el año t
-restr_2 = p.addConstrs(Emp[i] == 0.75 * quicksum(QM[i, e] * Prom_i_m + QH[i, e] * Prom_i_h for e in range(2, 4)) + 300 * (QM[i, 4] + QH[i, 4]) for i in range(t))
+# Restricción 2 Gastos totales
+restr_2 = p.addConstrs(Gastos[i] == Emp[i] + GG[i] + Inv_priv[i] + Imp[i] for i in range(1, t))
 
-# Restriccion 3 Gasto del Gobierno para el periodo t
-restr_3 = p.addConstrs(GG[i] == 200 * Pob[i] + Inv_pub[i] for i in range(t))
+# Restriccion 3 Gastos en empleo para el año t
+restr_3 = p.addConstrs(Emp[i] == 0.75 * quicksum(QM[i, e] * Prom_i_m + QH[i, e] * Prom_i_h for e in range(2, 4)) + 0.75 * 300 * (QM[i, 4] + QH[i, 4]) for i in range(1, t))
 
-# Restriccion 4 Inversión pública realizada el año t
+# Restriccion 4 Gasto del Gobierno para el periodo t
+restr_4 = p.addConstrs(GG[i] == 200 * Pob[i] + Inv_pub[i] for i in range(1, t))
+
+# Restriccion 5 Inversión pública realizada el año t
 # Se supone que el gasto se reparte en 3 años, pero esta como si se repartiera solo en uno
-restr_4 = p.addConstrs(Inv_pub[i] == 660000 * (X[i] + Y[i]) + 2000 * (QCA[i] - QCA[i-1]) for i in range(1, t))
+restr_5 = p.addConstrs(Inv_pub[i] == 660000 * (X[i] + Y[i]) + 2000 * (QCA[i] - QCA[i-1]) for i in range(1, t))
 
-# Restriccion 5 Inversión privada realizada el año t
-restr_5 = p.addConstrs(Inv_priv[i] == 0.05 * PBI[i-1] for i in range(1, t))
+# Restriccion 6 Inversión privada realizada el año t
+restr_6 = p.addConstrs(Inv_priv[i] == 0.05 * PBI[i-1] for i in range(2, t))
 
-# Restriccion 6 Gasto realizado por la importación de bienes en el periodo t
-restr_6 = p.addConstrs(Imp[i] == 1680 * Pob[i] for i in range(1, t))
+# Restriccion 7 Gasto realizado por la importación de bienes en el periodo t
+restr_7 = p.addConstrs(Imp[i] == 1680 * Pob[i] for i in range(1, t))
 #
-# # # Restriccion 7 Total de población para el periodo t
-restr_7_m = p.addConstrs(QM[0, e] == mujeres[e] for e in range(5))
-restr_7_h = p.addConstrs(QH[0, e] == hombres[e] for e in range(5))
-restr_7 = p.addConstrs(Pob[i] == quicksum(QM[i, e] + QH[i, e] for e in range(5)) for i in range(t))
+# # # Restriccion 8 Total de población para el periodo t
+restr_8_m = p.addConstrs(QM[0, e] == mujeres[e] for e in range(5))
+restr_8_h = p.addConstrs(QH[0, e] == hombres[e] for e in range(5))
+restr_8 = p.addConstrs(Pob[i] == quicksum(QM[i, e] + QH[i, e] for e in range(5)) for i in range(t))
 
-# Restriccion 8 Total de profesionales para el periodo t
-restr_8 = p.addConstrs(Prof[i] >=  quicksum(0.03 * QM[i, e] + 0.02 * QH[i, e] for e in range(3,5)) for i in range(t))
+# Restriccion 9 Total de profesionales para el periodo t
+restr_9 = p.addConstrs(Prof[i] >=  quicksum(0.03 * QM[i, e] + 0.02 * QH[i, e] for e in range(3,5)) for i in range(t))
 
-# Restriccion 9 Inmigración
+# Restriccion 10 Inmigración
 # ni idea como esribirla
 
-# Restriccion 10 Población para el próximo periodo
-restr_10_1 = p.addConstrs(QH[i, 0] >= QH[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5)) for i in range(1,t)) # + quicksum(QM[i, e] * Nac[e] for e in range(re))
-restr_10_2 = p.addConstrs(QH[i, 1] >= QH[i-1, 1] * 0.99495 + QH[i-1, 0] * 0.03 for i in range(1,t))
-restr_10_3 = p.addConstrs(QH[i, 2] >= QH[i-1, 2] * 0.99495 + QH[i-1, 1] * 0.02 for i in range(1,t))
-restr_10_4 = p.addConstrs(QH[i, 3] >= QH[i-1, 3] * 0.99495 + QH[i-1, 2] * 0.02 for i in range(1,t))
-restr_10_5 = p.addConstrs(QH[i, 4] >= QH[i-1, 4] * 0.99495 + QH[i-1, 3] * 0.015 for i in range(1,t))
+# Restriccion 11 Población para el próximo periodo
+restr_11_1 = p.addConstrs(QH[i, 0] >= QH[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5)) for i in range(1,t)) # + quicksum(QM[i, e] * Nac[e] for e in range(re))
+restr_11_2 = p.addConstrs(QH[i, 1] >= QH[i-1, 1] * 0.99495 + QH[i-1, 0] * 0.03 for i in range(1,t))
+restr_11_3 = p.addConstrs(QH[i, 2] >= QH[i-1, 2] * 0.99495 + QH[i-1, 1] * 0.02 for i in range(1,t))
+restr_11_4 = p.addConstrs(QH[i, 3] >= QH[i-1, 3] * 0.99495 + QH[i-1, 2] * 0.02 for i in range(1,t))
+restr_11_5 = p.addConstrs(QH[i, 4] >= QH[i-1, 4] * 0.99495 + QH[i-1, 3] * 0.015 for i in range(1,t))
 
-restr_10_6 = p.addConstrs(QM[i, 0] >= QM[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5))for i in range(1,t))
-restr_10_7 = p.addConstrs(QM[i, 1] >= QM[i-1, 1] * 0.99495 + QM[i-1, 0] * 0.03 for i in range(1,t))
-restr_10_8 = p.addConstrs(QM[i, 2] >= QM[i-1, 2] * 0.99495 + QM[i-1, 1] * 0.02 for i in range(1,t))
-restr_10_9 = p.addConstrs(QM[i, 3] >= QM[i-1, 3] * 0.99495 + QM[i-1, 2] * 0.02 for i in range(1,t))
-restr_10_10 = p.addConstrs(QM[i, 4] >= QM[i-1, 4] * 0.99495 + QM[i-1, 3] * 0.015 for i in range(1,t))
+restr_11_6 = p.addConstrs(QM[i, 0] >= QM[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5))for i in range(1,t))
+restr_11_7 = p.addConstrs(QM[i, 1] >= QM[i-1, 1] * 0.99495 + QM[i-1, 0] * 0.03 for i in range(1,t))
+restr_11_8 = p.addConstrs(QM[i, 2] >= QM[i-1, 2] * 0.99495 + QM[i-1, 1] * 0.02 for i in range(1,t))
+restr_11_9 = p.addConstrs(QM[i, 3] >= QM[i-1, 3] * 0.99495 + QM[i-1, 2] * 0.02 for i in range(1,t))
+restr_11_10 = p.addConstrs(QM[i, 4] >= QM[i-1, 4] * 0.99495 + QM[i-1, 3] * 0.015 for i in range(1,t))
 
-# Restriccion 11 La inversión pública no puede superar el 2% del PBI del año anterior
-restr_11 = p.addConstrs(Inv_pub[i] <= 0.02 * PBI[i-1] for i in range(1,t))
+# Restriccion 12 La inversión pública no puede superar el 2% del PBI del año anterior
+restr_12 = p.addConstrs(Inv_pub[i] <= 0.02 * PBI[i-1] for i in range(2,t))
 
-# Restriccion 12 Cantidad de casas que hay en la comuna
-restr_12 = p.addConstrs(QC[i] == 0.25 * Pob[i]  for i in range(t))
+# Restriccion 13 Cantidad de casas que hay en la comuna
+restr_13 = p.addConstrs(QC[i] == 0.25 * Pob[i]  for i in range(t))
 
-# Restriccion 13 Respetar cantidad total de agua disponible para todos los periodos
-restr_13_0 = p.addConstr(W[0] == WL[0] / 1000 * H_total + WS) # las hectarias hay que cambiarlas a m3
-restr_13 = p.addConstrs(W[i] == W[i-1] + WL[i] / 1000 * H_total + WS + WR[i] - WA[i] - WI - WP[i] for i in range(1, t))
+## Las cantidades de aguas estan en m3
+
+# Restriccion 14 Respetar cantidad total de agua disponible para todos los periodos
+restr_14_0 = p.addConstr(W[0] == WL[0] / 1000 * H_total + WS) # las hectarias hay que cambiarlas a m3
+restr_14 = p.addConstrs(W[i] == W[i-1] + WL[i] / 1000 * H_total + WS + WR[i] - WA[i] - WI - WP[i] for i in range(1, t))
 # restr_13_1 = p.addConstrs(WA[i] == quicksum(H[i,j] for j in range(c)) * WL[i] / 1000 for i in range(t))
 
-# Restriccion 14 Respetar producción de agua potable (120 ltpersona * dia  y debe cubrir como mínimo al 60% de la población) Son 2102400 m3/año inicialmente
-restr_14_arriba = p.addConstrs(0.12 * Pob[i] * 365 <= WP[i] for i in range(t))
-restr_14_abajo = p.addConstrs(0.15 * Pob[i] * 365 >= WP[i] for i in range(t))
+# Restriccion 15 Respetar producción de agua potable, min 120 lts/dia, max 150 lts/dia, produccion de agua potable < capacidad plantas potables + agua recuperada
+restr_15_arriba = p.addConstrs(0.12 * Pob[i] * 365 <= WP[i] for i in range(t))
+restr_15_abajo = p.addConstrs(0.15 * Pob[i] * 365 >= WP[i] for i in range(t))
+restr_15_prod = p.addConstrs(WP[i] <= 365 * CPP[i] + WP[i] for i in range(t))
 
-restr_14_prod = p.addConstrs(WP[i] <= 365 * CPP[i] + WP[i] for i in range(t))
+# Restriccion 16 Respetar conexión a alcantarillas (Mínimo 60% de las casas y si se construyeron no se pueden sacar)
+restr_16 = p.addConstr(QCA[0] == 0.25 * 0.6 * Pob[0])
+restr_16_abajo = p.addConstrs(QCA[i] >=  0.25 * 0.6 * Pob[i] for i in range(1, t))
+restr_16_1 = p.addConstrs(QCA[i] >= QCA[i - 1] for i in range(1, t))
 
-# Restriccion 15 Respetar conexión a alcantarillas (Mínimo 60% de las casas)
-restr_15 = p.addConstr(QCA[0] == 0.25 * 0.6 * Pob[0])
-restr_15_abajo = p.addConstrs(QCA[i] >=  0.25 * 0.6 * Pob[i] for i in range(1, t))
-restr_15_1 = p.addConstrs(QCA[i] >= QCA[i - 1] for i in range(1, t))
+# Restriccion 17 Agua total recuperada por la planta de Aguas Servidas
+restr_17_abajo = p.addConstrs(WR[i] == 0.8 * WP[i] * 0.6 for i in range(t))
+restr_17_prod = p.addConstrs(WR[i] <= 365 * CPA[i]  for i in range(t))
+
+# Restriccion 18 Aumento de capacidad al crear planta de potabilizacion
+restr_18_0 = p.addConstr(CPP[0] == 0.12 * Pob[0])
+restr_18 = p.addConstrs(CPP[i] == CPP[i-1] + 60 * X[i] * 24 for i in range(1, t))
+
+# Restricción 19 Aumento de capacidad al crear planta de Aguas Servidas
+restr_19_0 = p.addConstr(CPA[0] == 2765)
+restr_19 = p.addConstrs(CPA[i] == CPA[i-1] + 60 * Y[i] * 24 for i in range(1, t))
+
+# Restriccion 20 Aporte de aguas subterraneas
 
 
-# Restriccion 16 Agua total recuperada por la planta de Aguas Servidas
-restr_16_abajo = p.addConstrs(WR[i] == 0.8 * WP[i] * 0.6 for i in range(t))
-restr_16_prod = p.addConstrs(WR[i] <= 365 * CPA[i]  for i in range(t))
-
-# Restriccion 19 Aumento de capacidad al crear planta de potabilizacion
-restr_19_0 = p.addConstr(CPP[0] == 0.12 * Pob[0])
-restr_19 = p.addConstrs(CPP[i] == CPP[i-1] + 60 * X[i] * 24 for i in range(1, t))
-
-# Restricción 21 Aumento de capacidad al crear planta de Aguas Servidas
-restr_21_0 = p.addConstr(CPA[0] == 2765)
-rest_21 = p.addConstrs(CPA[i] == CPA[i-1] + 60 * Y[i] * 24 for i in range(1, t))
 
 # # Restricciones duales productor
 
-# Restriccion a Cantidad a producir en hectáreas para cada cultivo para el año t debe ser menor al total de hectáreas
+# Restriccion 22 Respetar cantidad de hectareas disponibles
 restr_22_0 = p.addConstrs(H[0,j] == H_inicial[j] for j in range(c+1))
 restr_22 = p.addConstrs(quicksum(H[i,j] for j in range(c+1)) == H_total for i in range(t))
 
@@ -267,7 +276,7 @@ restr_30 = p.addConstr( WA[1] - quicksum(A_c[j] * H[1, j] for j in range(c)) <= 
 restr_31 = p.addConstrs( H[1, k - 2] - H_min[k - 2] <= M * (1 - zeta[k]) for k in range(2, r))
 
 # Restriccion Exportaciones
-restr_32 = p.addConstrs(Exp[i] == quicksum(H[i,j] * ton_hectarea[j] * precio_ton[j] for j in range(c)) for i in range(t)) # * (1 - costos[j])  - inversion[j] * H[i,j]
+restr_32 = p.addConstrs(Exp[i] == quicksum(H[i,j] * ton_hectarea[j] * precio_ton[j] for j in range(c)) for i in range(1, t)) # * (1 - costos[j])  - inversion[j] * H[i,j]
 
 # No puede aumentar en mas de un 25% ni disminuir mas de un 30%
 restr_33 = p.addConstrs(H[i, j] <= 1.25 * H[i-1, j] for j in range(c) for i in range(1, t))
@@ -278,6 +287,7 @@ restr_33 = p.addConstrs(H[i, j] <= 1.25 * H[i-1, j] for j in range(c) for i in r
 p.update()
 p.optimize()
 p.printAttr('X')
-with open('resultados.txt', 'w', encoding='utf-8') as file:
+with open('resultados', 'w', encoding='utf-8') as file:
     for v in p.getVars():
         file.write('%s %g \n' % (v.varName, v.x))
+
