@@ -114,13 +114,13 @@ CPP = p.addVars(t, obj = 5760.0, name="Capacidad diaria Planta Potable", vtype=G
 # Capacidad de planta Aguas Servidas para el periodo t
 CPA = p.addVars(t, obj = 2765.0, name="Capacidad diaria Planta Aguas Servidas", vtype=GRB.INTEGER)
 
-## Variables para calcular el Agua
+## Variables para calcular el Agua, estan en m3
 # Agua potable que consumen las casa en el periodo t
 WP = p.addVars(t, lb = 0.0, name="Agua Potable", vtype=GRB.CONTINUOUS)
 # Agua recuperada por la planta de Aguas Servidas en el periodo t
 WR = p.addVars(t, lb = 0.0, name="Agua Recuperada Alcantarillado", vtype=GRB.CONTINUOUS)
-# Agua subterranea disponible en el periodo t, ES PARAMETRO
-WS = 3942000
+# Agua subterranea disponible en el periodo t
+WS = p.addVars(t, lb = 0.0, name="Agua Subterranea", vtype=GRB.CONTINUOUS) # 3942000
 # Agua disponible para la agricultura que se consume el periodo t
 WA = p.addVars(t, lb = 0.0, name="Agua Agricultura", vtype=GRB.CONTINUOUS)
 # Agua que se consume en el sector de la industria ES PARAMETRO
@@ -163,7 +163,7 @@ restr_1_0 = p.addConstr(PBI[0] == 5500 * Pob[0])
 restr_1 = p.addConstrs(PBI[i] ==  Exp[i] - Gastos[i]  for i in range(1, t)) # Sacamos la variable Exp
 
 # Restricción 2 Gastos totales
-restr_2 = p.addConstrs(Gastos[i] == Emp[i] + GG[i] + Inv_priv[i] + Imp[i] for i in range(1, t))
+restr_2 = p.addConstrs(Gastos[i] == Emp[i] + GG[i] + Inv_priv[i] + Imp[i] + WS[i] * 2.5  for i in range(1, t))
 
 # Restriccion 3 Gastos en empleo para el año t
 restr_3 = p.addConstrs(Emp[i] == 0.75 * quicksum(QM[i, e] * Prom_i_m + QH[i, e] * Prom_i_h for e in range(2, 4)) + 0.75 * 300 * (QM[i, 4] + QH[i, 4]) for i in range(1, t))
@@ -180,8 +180,8 @@ restr_6 = p.addConstrs(Inv_priv[i] == 0.05 * PBI[i-1] for i in range(2, t))
 
 # Restriccion 7 Gasto realizado por la importación de bienes en el periodo t
 restr_7 = p.addConstrs(Imp[i] == 1680 * Pob[i] for i in range(1, t))
-#
-# # # Restriccion 8 Total de población para el periodo t
+
+# Restriccion 8 Total de población para el periodo t
 restr_8_m = p.addConstrs(QM[0, e] == mujeres[e] for e in range(5))
 restr_8_h = p.addConstrs(QH[0, e] == hombres[e] for e in range(5))
 restr_8 = p.addConstrs(Pob[i] == quicksum(QM[i, e] + QH[i, e] for e in range(5)) for i in range(t))
@@ -214,8 +214,8 @@ restr_13 = p.addConstrs(QC[i] == 0.25 * Pob[i]  for i in range(t))
 ## Las cantidades de aguas estan en m3
 
 # Restriccion 14 Respetar cantidad total de agua disponible para todos los periodos
-restr_14_0 = p.addConstr(W[0] == WL[0] / 1000 * H_total + WS) # las hectarias hay que cambiarlas a m3
-restr_14 = p.addConstrs(W[i] == W[i-1] + WL[i] / 1000 * H_total + WS + WR[i] - WA[i] - WI - WP[i] for i in range(1, t))
+restr_14_0 = p.addConstr(W[0] == WL[0] / 1000 * H_total * 10000 + WS[0]) # m3 de agua en toda la comuna
+restr_14 = p.addConstrs(W[i] == W[i-1] + WL[i] / 1000 * H_total * 10000 + WS[i] + WR[i] - WA[i] - WI - WP[i] for i in range(1, t))
 # restr_13_1 = p.addConstrs(WA[i] == quicksum(H[i,j] for j in range(c)) * WL[i] / 1000 for i in range(t))
 
 # Restriccion 15 Respetar producción de agua potable, min 120 lts/dia, max 150 lts/dia, produccion de agua potable < capacidad plantas potables + agua recuperada
@@ -241,7 +241,10 @@ restr_19_0 = p.addConstr(CPA[0] == 2765)
 restr_19 = p.addConstrs(CPA[i] == CPA[i-1] + 60 * Y[i] * 24 for i in range(1, t))
 
 # Restriccion 20 Aporte de aguas subterraneas
+restr_20 = p.addConstrs(WS[i] <= 450 * 8640 for i in range(1, t))
 
+# Restriccion 21 Limitar consumo de agua a agricultura
+restr_21_a = p.addConstrs(WA[i] <= 200000000 for i in range(1, t))
 
 
 # # Restricciones duales productor
@@ -287,7 +290,12 @@ restr_33 = p.addConstrs(H[i, j] <= 1.25 * H[i-1, j] for j in range(c) for i in r
 p.update()
 p.optimize()
 p.printAttr('X')
-with open('resultados', 'w', encoding='utf-8') as file:
+
+# with open('resultados.csv', 'w', encoding='utf-8') as file:
+#     writer = csv.writer(file)
+#     for v in p.getVars():
+#         writer.writerow([v.varName, v.x])
+
+with open('resultados.txt', 'w', encoding='utf-8') as file:
     for v in p.getVars():
         file.write('%s %g \n' % (v.varName, v.x))
-
