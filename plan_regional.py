@@ -160,7 +160,7 @@ p.setObjective(quicksum(PBI[i]   for i in range(t)), GRB.MAXIMIZE)
 
 # Restriccion 1 Definición de PBI
 restr_1_0 = p.addConstr(PBI[0] == 5500 * Pob[0])
-restr_1 = p.addConstrs(PBI[i] ==  Exp[i] - Gastos[i]  for i in range(1, t)) # Sacamos la variable Exp
+restr_1 = p.addConstrs(PBI[i] ==  Exp[i] - Gastos[i]  for i in range(1, t))
 
 # Restricción 2 Gastos totales
 restr_2 = p.addConstrs(Gastos[i] == Emp[i] + GG[i] + Inv_priv[i] + Imp[i] + WS[i] * 2.5  for i in range(1, t))
@@ -176,7 +176,7 @@ restr_4 = p.addConstrs(GG[i] == 200 * Pob[i] + Inv_pub[i] for i in range(1, t))
 restr_5 = p.addConstrs(Inv_pub[i] == 660000 * (X[i] + Y[i]) + 2000 * (QCA[i] - QCA[i-1]) for i in range(1, t))
 
 # Restriccion 6 Inversión privada realizada el año t
-restr_6 = p.addConstrs(Inv_priv[i] == 0.05 * PBI[i-1] for i in range(2, t))
+restr_6 = p.addConstrs(Inv_priv[i] == 0.05 * PBI[i-1] for i in range(1, t))
 
 # Restriccion 7 Gasto realizado por la importación de bienes en el periodo t
 restr_7 = p.addConstrs(Imp[i] == 1680 * Pob[i] for i in range(1, t))
@@ -214,9 +214,10 @@ restr_13 = p.addConstrs(QC[i] == 0.25 * Pob[i]  for i in range(t))
 ## Las cantidades de aguas estan en m3
 
 # Restriccion 14 Respetar cantidad total de agua disponible para todos los periodos
-restr_14_0 = p.addConstr(W[0] == WL[0] / 1000 * H_total * 10000 + WS[0]) # m3 de agua en toda la comuna
-restr_14 = p.addConstrs(W[i] == W[i-1] + WL[i] / 1000 * H_total * 10000 + WS[i] + WR[i] - WA[i] - WI - WP[i] for i in range(1, t))
-# restr_13_1 = p.addConstrs(WA[i] == quicksum(H[i,j] for j in range(c)) * WL[i] / 1000 for i in range(t))
+    # m3 de agua en toda la comuna - las 16000 sin plantar
+restr_14_0 = p.addConstr(W[0] == WL[0] * 24000 * 10 * 0.5  + WS[0])
+    # agua de lluvia considera los terrenos agricoals utilizados mas el terreno urbano
+restr_14 = p.addConstrs(W[i] == W[i-1] + WL[i] * 10 * (quicksum(H[i, j] for j in range(c)) + 5250.51) + WS[i] + WR[i] - WA[i] - WI - WP[i] for i in range(1, t))
 
 # Restriccion 15 Respetar producción de agua potable, min 120 lts/dia, max 150 lts/dia, produccion de agua potable < capacidad plantas potables + agua recuperada
 restr_15_arriba = p.addConstrs(0.12 * Pob[i] * 365 <= WP[i] for i in range(t))
@@ -229,7 +230,7 @@ restr_16_abajo = p.addConstrs(QCA[i] >=  0.25 * 0.6 * Pob[i] for i in range(1, t
 restr_16_1 = p.addConstrs(QCA[i] >= QCA[i - 1] for i in range(1, t))
 
 # Restriccion 17 Agua total recuperada por la planta de Aguas Servidas
-restr_17_abajo = p.addConstrs(WR[i] == 0.8 * WP[i] * 0.6 for i in range(t))
+restr_17_abajo = p.addConstrs(WR[i] >= 0.8 * WP[i] * 0.6 for i in range(t))
 restr_17_prod = p.addConstrs(WR[i] <= 365 * CPA[i]  for i in range(t))
 
 # Restriccion 18 Aumento de capacidad al crear planta de potabilizacion
@@ -243,8 +244,12 @@ restr_19 = p.addConstrs(CPA[i] == CPA[i-1] + 60 * Y[i] * 24 for i in range(1, t)
 # Restriccion 20 Aporte de aguas subterraneas
 restr_20 = p.addConstrs(WS[i] <= 450 * 8640 for i in range(1, t))
 
-# Restriccion 21 Limitar consumo de agua a agricultura
-restr_21_a = p.addConstrs(WA[i] <= 200000000 for i in range(1, t))
+# Restriccion 21 Asegurar agua potable para prox año
+restr_21_a = p.addConstrs(W[i] >= WP[i-1] for i in range(1, t))
+
+# Restriccion 22 Limitar consumo agua en agricultura
+# Falta definir el segundo nivel pa que funcione bien porque solo funciona con el periodo 1
+#restr_21_b = p.addConstrs(WA[i] <= 250000000 for i in range(1, t))
 
 
 # # Restricciones duales productor
@@ -292,9 +297,9 @@ p.optimize()
 p.printAttr('X')
 
 # with open('resultados.csv', 'w', encoding='utf-8') as file:
-#     writer = csv.writer(file)
-#     for v in p.getVars():
-#         writer.writerow([v.varName, v.x])
+#      writer = csv.writer(file)
+#      for v in p.getVars():
+#          writer.writerow([v.varName, v.x])
 
 with open('resultados.txt', 'w', encoding='utf-8') as file:
     for v in p.getVars():
