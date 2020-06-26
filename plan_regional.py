@@ -2,6 +2,7 @@
 
 from gurobipy import *
 import csv
+import math
 
 # Definición de Parámetros
 
@@ -142,6 +143,10 @@ QH = p.addVars(t, 5, lb=0.0, name="Cantidad Hombres", vtype=GRB.INTEGER)
 QC = p.addVars(t, lb=0.0, name="Cantidad Casas", vtype=GRB.INTEGER)
 # Cantidad de profesionales para el periodo t
 Prof = p.addVars(t, lb=0.0, name="Cantidad Profesionales", vtype=GRB.INTEGER)
+# Mano de obra agricultura
+MDOA = p.addVars(t, lb=0.0, name="Mano de obra en agricultura", vtype=GRB.INTEGER)
+# Atractividad de la zona
+a = p.addVars(t,lb=-10000000,  name="Atractividad de la zona", vtype=GRB.CONTINUOUS)
 
 # ## Variables de plantas de recuperacion/potabilizacion aguas
 # Cantidad de conexiones a alcantarillas que hay que hacer el periodo t
@@ -205,11 +210,11 @@ p.setObjective(quicksum(PBI[i] for i in range(t)), GRB.MAXIMIZE)
 
 # Restriccion 1 Definición de PBI
 restr_1_0 = p.addConstr(PBI[0] == 5500 * Pob[0])
-restr_1 = p.addConstrs(PBI[i] == Exp[i] + Gastos[i] for i in range(1, t))
+restr_1 = p.addConstrs(PBI[i] == Exp[i] - Gastos[i] for i in range(1, t))
 
 # Restricción 2 Gastos totales
 restr_2 = p.addConstrs(
-    Gastos[i] == Emp[i] + GG[i] + Inv_priv[i] + Imp[i] + WS[i] * 2.5 for i in
+    Gastos[i] == Emp[i] + GG[i] + Inv_priv[i] - Imp[i] + WS[i] * 2.5 for i in
     range(1, t))
 
 # Restriccion 3 Gastos en empleo para el año t
@@ -245,6 +250,12 @@ restr_9 = p.addConstrs(
 
 # Restriccion 10 Inmigración
 # ni idea como esribirla
+#restr_10 = p.addConstrs(MDOA[i] == 0.55 * quicksum(QH[i, e] for e in range(3,5)) + 0.65 * quicksum(QM[i, e] for e in range(3,5)) for i in range(1, t))
+
+#restr_atractividad_0 = p.addConstr(a[0] == 0)
+#restr_atractividad_1 = p.addConstrs(a[i] == 0.3 * a[i - 2] + 0.7 * a[i - 1] for i in range(2, t))
+#restr_atractividad_2 = p.addConstrs(a[i] == PBI[i - 1] / 1000 - (1+MDOA[i - 1]) + 1 - Pob[i - 1]/50000 for i in range(1, t))
+
 
 # Restriccion 11 Población para el próximo periodo
 restr_11_1 = p.addConstrs(QH[i, 0] >= QH[i - 1, 0] * 0.99495 + quicksum(
@@ -371,7 +382,7 @@ restr_31 = p.addConstrs(
 rest_32 = p.addConstrs(Exp[i] == quicksum(
     H[i, j] * ton_hectarea[j] * precio_ton[j] * (round(1 + (
                 (var_precio[i - 1][j][1] - var_precio[i - 1][j][0]) * vau +
-                var_precio[i - 1][j][0]) / 100, 2)) * costos[j] for j in
+                var_precio[i - 1][j][0]) / 100, 2)) * costos[j] + inversion[j] * H[i,j] for j in
     range(c)) for i in range(1,
                              t))  # * (1 - costos[j])  - inversion[j] * H[i,j]
 
