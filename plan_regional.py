@@ -297,7 +297,7 @@ restr_30 = p.addConstr( WA[1] - quicksum(A_c[j] * H[1, j] for j in range(c)) <= 
 restr_31 = p.addConstrs( H[1, k - 2] - H_min[k - 2] <= M * (1 - zeta[k]) for k in range(2, r))
 
 # Restriccion Exportaciones
-rest_32 = p.addConstrs(Exp[i] == quicksum(H[i,j] * ton_hectarea[j] * precio_ton[j] * (round(1 + ((var_precio[i-1][j][1] - var_precio[i-1][j][0]) * vau + var_precio[i-1][j][0])/100,2)) * costos[j] + inversion[j] * H[i,j] for j in range(c)) for i in range(1, t)) # * (1 - costos[j])  - inversion[j] * H[i,j]
+rest_32 = p.addConstrs(Exp[i] == quicksum(H[i,j] * ton_hectarea[j] * precio_ton[j] * (round(1 + ((var_precio[i-1][j][1] - var_precio[i-1][j][0]) * vau + var_precio[i-1][j][0])/100,2)) * costos[j] + inversion[j] * H[i,j] * ton_hectarea[j] / 100 for j in range(c)) for i in range(1, t)) # * (1 - costos[j])  - inversion[j] * H[i,j]
 
 # No puede aumentar en mas de un 25% ni disminuir mas de un 30%
 restr_33 = p.addConstrs(H[i, j] <= 1.25 * H[i-1, j] for j in range(c) for i in range(1, t))
