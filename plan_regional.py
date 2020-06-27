@@ -262,7 +262,7 @@ restr_21_a = p.addConstrs(W[i] >= WP[i-1] for i in range(1, t))
 
 # Restriccion 22 Limitar consumo agua en agricultura
 # Falta definir el segundo nivel pa que funcione bien porque solo funciona con el periodo 1
-#restr_21_b = p.addConstrs(WA[i] <= 305000000 for i in range(1, t))
+restr_21_b = p.addConstrs(WA[i] <= 290000000 for i in range(1, t))
 
 
 # # Restricciones duales productor
