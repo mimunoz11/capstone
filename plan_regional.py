@@ -90,19 +90,19 @@ p = Model("planificacion") # Se define el modelo
 ## Variables para calcular PBI
 # PBI
 PBI = p.addVars(t, lb = 0.0, name="PBI", vtype=GRB.CONTINUOUS)
-# Gastos en empleo para el año t
-Emp = p.addVars(t, lb = 0.0, name="Empleo", vtype=GRB.CONTINUOUS)
+# Consumo familias para el año t
+Cons = p.addVars(t, lb = 0.0, name="Consumo_familias", vtype=GRB.CONTINUOUS)
 # Gasto de Gobierno para el año t
 GG = p.addVars(t, lb = 0.0, name="Gasto_Gobierno", vtype=GRB.CONTINUOUS)
-# Inversión público para el año t
+# Gasto en Inversión público para el año t
 Inv_pub = p.addVars(t, lb = 0.0, name="Inv_pub", vtype=GRB.CONTINUOUS)
-# Inversión privada para el año t
+# Gasto en Inversión privada para el año t
 Inv_priv = p.addVars(t, lb = 0.0, name="Inv_priv", vtype=GRB.CONTINUOUS)
 # Gasto realizado por la importación de bienes para el año t
 Imp = p.addVars(t, lb = 0.0, name="Importaciones", vtype=GRB.CONTINUOUS)
-# Ganancia de los exportaciones para el año t
+# Gasto de los productores para el año t
 Exp = p.addVars(t, lb = 0.0, name="Exportaciones", vtype=GRB.CONTINUOUS)
-# Gastos totales para el periodo t
+# Gastos totales realizado fuera de la comuna para el periodo t
 Gastos = p.addVars(t, lb = 0.0, name="Gastos", vtype=GRB.CONTINUOUS)
 
 ## Variables para calcular la cantidad de gente y casas
@@ -123,8 +123,6 @@ MDOA = p.addVars(t, lb=0.0, name="Mano_de_obra_en_agricultura", vtype=GRB.INTEGE
 # Cantidad de conexiones a alcantarillas que hay que hacer el periodo t
 QCA = p.addVars(t, lb = 7200.0 , name="Cantidad_Alcantarillas", vtype=GRB.INTEGER)
 # Cantidad de bocas subterraneas en el periodo t
-QBS = p.addVars(t, lb = 0.0, name="Cantidad_Bocas_Subterraneas", vtype=GRB.INTEGER)
-# Capacidad de planta potable para el periodo t
 CPP = p.addVars(t, obj = 5760.0, name="Capacidad_diaria_Planta_Potable", vtype=GRB.INTEGER)
 # Capacidad de planta Aguas Servidas para el periodo t
 CPA = p.addVars(t, obj = 2765.0, name="Capacidad_diaria_Planta_Aguas_Servidas", vtype=GRB.INTEGER)
@@ -181,13 +179,13 @@ p.setObjective(quicksum(PBI[i] for i in range(t)), GRB.MAXIMIZE)
 
 # Restriccion 1 Definición de PBI
 restr_1_0 = p.addConstr(PBI[0] == 5500 * Pob[0])
-restr_1 = p.addConstrs(PBI[i] ==  Exp[i] + Gastos[i] for i in range(1, t))
+restr_1 = p.addConstrs(PBI[i] ==  Exp[i] - Gastos[i] for i in range(1, t))
 
 # Restricción 2 Gastos totales
-restr_2 = p.addConstrs(Gastos[i] == - Emp[i] - GG[i] - Inv_priv[i] + Imp[i] for i in range(1, t))
+restr_2 = p.addConstrs(Gastos[i] == - Cons[i] - GG[i] - Inv_priv[i] + Imp[i] for i in range(1, t))
 
 # Restriccion 3 Gastos en empleo para el año t
-restr_3 = p.addConstrs(Emp[i] == 0.75 * quicksum(QM[i, e] * Prom_i_m + QH[i, e] * Prom_i_h for e in range(2, 4)) + 0.75 * 300 * (QM[i, 4] + QH[i, 4]) for i in range(1, t))
+restr_3 = p.addConstrs(Cons[i] == 0.75 * quicksum(QM[i, e] * Prom_i_m + QH[i, e] * Prom_i_h for e in range(2, 4)) + 0.75 * 300 * (QM[i, 4] + QH[i, 4]) for i in range(1, t))
 
 # Restriccion 4 Gasto del Gobierno para el periodo t
 restr_4 = p.addConstrs(GG[i] == 200 * Pob[i] + Inv_pub[i] + WS[i] * 2.5 for i in range(1, t))
@@ -216,17 +214,17 @@ restr_10 = p.addConstrs(MDOA[i] >= 0.55 * quicksum(QH[i, e] for e in range(2,4))
 # ni idea como esribirla
 
 # Restriccion 11 Población para el próximo periodo
-restr_11_1 = p.addConstrs(QH[i, 0] <= QH[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5)) for i in range(1,t)) # + quicksum(QM[i, e] * Nac[e] for e in range(re))
-restr_11_2 = p.addConstrs(QH[i, 1] <= QH[i-1, 1] * 0.99495 + QH[i-1, 0] * 0.03 for i in range(1,t))
-restr_11_3 = p.addConstrs(QH[i, 2] <= QH[i-1, 2] * 0.99495 + QH[i-1, 1] * 0.02 for i in range(1,t))
-restr_11_4 = p.addConstrs(QH[i, 3] <= QH[i-1, 3] * 0.99495 + QH[i-1, 2] * 0.02 for i in range(1,t))
-restr_11_5 = p.addConstrs(QH[i, 4] <= QH[i-1, 4] * 0.99495 + QH[i-1, 3] * 0.015 for i in range(1,t))
+restr_11_1 = p.addConstrs(QH[i, 0] >= QH[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5)) for i in range(1,t)) # + quicksum(QM[i, e] * Nac[e] for e in range(re))
+restr_11_2 = p.addConstrs(QH[i, 1] >= QH[i-1, 1] * 0.99495 + QH[i-1, 0] * 0.03 for i in range(1,t))
+restr_11_3 = p.addConstrs(QH[i, 2] >= QH[i-1, 2] * 0.99495 + QH[i-1, 1] * 0.02 for i in range(1,t))
+restr_11_4 = p.addConstrs(QH[i, 3] >= QH[i-1, 3] * 0.99495 + QH[i-1, 2] * 0.02 for i in range(1,t))
+restr_11_5 = p.addConstrs(QH[i, 4] >= QH[i-1, 4] * 0.99495 + QH[i-1, 3] * 0.015 for i in range(1,t))
 
-restr_11_6 = p.addConstrs(QM[i, 0] <= QM[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5))for i in range(1,t))
-restr_11_7 = p.addConstrs(QM[i, 1] <= QM[i-1, 1] * 0.99495 + QM[i-1, 0] * 0.03 for i in range(1,t))
-restr_11_8 = p.addConstrs(QM[i, 2] <= QM[i-1, 2] * 0.99495 + QM[i-1, 1] * 0.02 for i in range(1,t))
-restr_11_9 = p.addConstrs(QM[i, 3] <= QM[i-1, 3] * 0.99495 + QM[i-1, 2] * 0.02 for i in range(1,t))
-restr_11_10 = p.addConstrs(QM[i, 4] <= QM[i-1, 4] * 0.99495 + QM[i-1, 3] * 0.015 for i in range(1,t))
+restr_11_6 = p.addConstrs(QM[i, 0] >= QM[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5))for i in range(1,t))
+restr_11_7 = p.addConstrs(QM[i, 1] >= QM[i-1, 1] * 0.99495 + QM[i-1, 0] * 0.03 for i in range(1,t))
+restr_11_8 = p.addConstrs(QM[i, 2] >= QM[i-1, 2] * 0.99495 + QM[i-1, 1] * 0.02 for i in range(1,t))
+restr_11_9 = p.addConstrs(QM[i, 3] >= QM[i-1, 3] * 0.99495 + QM[i-1, 2] * 0.02 for i in range(1,t))
+restr_11_10 = p.addConstrs(QM[i, 4] >= QM[i-1, 4] * 0.99495 + QM[i-1, 3] * 0.015 for i in range(1,t))
 
 # Restriccion 12 La inversión pública no puede superar el 2% del PBI del año anterior
 restr_12 = p.addConstrs(Inv_pub[i] <= 0.02 * PBI[i-1] for i in range(1,t))
