@@ -2,7 +2,6 @@
 
 from gurobipy import *
 import csv
-import numpy as np
 
 
 # Definición de Parámetros
@@ -57,8 +56,22 @@ variaciones_precio = [
         [-1,0,1,2,3,4], [-3,-2,-1,0,1,2,3,4], [-2,-1,0,1,2], [-2,-1,0,1,2,3,4], [-4,-3,-2,-1,0,1,2,3,4], [-5,-4,-3,-2,-1,0,1,2,3,4], [-3,-2,-1,0,1,2]
     ]
 ]
+var_precio = [
+    [[-3, 2], [0, 5], [-5, 4], [-5, 0], [-4, 3], [-2, 5], [-5, 2]],
+    [[-2, 7], [0, 6], [0, 3], [-1, 5], [-2, 3], [0, 5], [0, 7]],
+    [[-2, 2], [-1, 4], [-5, 4], [-2, 3], [0, 4], [0, 3], [0, 3]],
+    [[-2, 8], [-3, 7], [-1, 6], [-2, 2], [-4, 6], [-4, 6], [-4, 3]],
+    [[0, 2], [-2, 7], [-5, 2], [-5, 7], [-3, 7], [-3, 5], [0, 6] ],
+    [[-2, 5], [-5, 2], [-3, 4], [0, 4], [-3, 0], [-3, 3], [-3, 0]],
+    [[0, 2], [-4, 2], [-3, 3], [-3, 1], [-1, 1], [-3, 3], [0, 3]],
+    [[-4, 4], [-4, 5], [-3, 5], [-2, 5], [-3, 2], [-2, 3], [0, 5]],
+    [[-3, 3], [-2, 6], [-1, 6], [0, 3], [-1, 5], [-3, 5], [-3, 3]],
+    [[-1, 4], [-3, 4], [-2, 2], [-2, 4], [-4, 4], [-5, 4], [-3, 2]]
+]
+vau = 0
+
 costos = [0.6, 0.65, 0.8, 0.66, 0.7, 0.45, 0.65] #costos de cada cultivo, porcentaje respecto al precio
-inversion = [211200, 45500, 4800, 23460, 89100, 302500, 315000] #inversion para tener 100 ton de cada cultivo
+inversion = [2112, 455, 48, 234.6, 891, 3025, 3150] #inversion para tener 1 ton de cada cultivo
 MOD_min =  [0.74, 2.48, 2.88, 3.35,  1.04, 1.16, 0.22] # Mano de obra minima por hectarea
 precio_kg = [2.64, 0.65, 0.120, 0.345, 1.485, 2.75, 4.5]
 precio_ton=[2640, 650, 230, 345, 1485, 2750, 4500] #precio venta por cada tonelada, ordenadas según excel
@@ -155,21 +168,21 @@ zeta = p.addVars(r, lb =0.0, name="zeta", vtype= GRB.BINARY)
 # FUNCION OBJETIVO
 
 
-p.setObjective(quicksum(PBI[i]   for i in range(t)), GRB.MAXIMIZE)
+p.setObjective(quicksum(PBI[i] for i in range(t)), GRB.MAXIMIZE)
 
 
 # Restriccion 1 Definición de PBI
 restr_1_0 = p.addConstr(PBI[0] == 5500 * Pob[0])
-restr_1 = p.addConstrs(PBI[i] ==  Exp[i] - Gastos[i]  for i in range(1, t))
+restr_1 = p.addConstrs(PBI[i] ==  Exp[i] + Gastos[i] for i in range(1, t))
 
 # Restricción 2 Gastos totales
-restr_2 = p.addConstrs(Gastos[i] == Emp[i] + GG[i] + Inv_priv[i] + Imp[i] + WS[i] * 2.5  for i in range(1, t))
+restr_2 = p.addConstrs(Gastos[i] == - Emp[i] - GG[i] - Inv_priv[i] + Imp[i] for i in range(1, t))
 
 # Restriccion 3 Gastos en empleo para el año t
 restr_3 = p.addConstrs(Emp[i] == 0.75 * quicksum(QM[i, e] * Prom_i_m + QH[i, e] * Prom_i_h for e in range(2, 4)) + 0.75 * 300 * (QM[i, 4] + QH[i, 4]) for i in range(1, t))
 
 # Restriccion 4 Gasto del Gobierno para el periodo t
-restr_4 = p.addConstrs(GG[i] == 200 * Pob[i] + Inv_pub[i] for i in range(1, t))
+restr_4 = p.addConstrs(GG[i] == 200 * Pob[i] + Inv_pub[i] + WS[i] * 2.5 for i in range(1, t))
 
 # Restriccion 5 Inversión pública realizada el año t
 # Se supone que el gasto se reparte en 3 años, pero esta como si se repartiera solo en uno
@@ -193,20 +206,20 @@ restr_9 = p.addConstrs(Prof[i] >=  quicksum(0.03 * QM[i, e] + 0.02 * QH[i, e] fo
 # ni idea como esribirla
 
 # Restriccion 11 Población para el próximo periodo
-restr_11_1 = p.addConstrs(QH[i, 0] >= QH[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5)) for i in range(1,t)) # + quicksum(QM[i, e] * Nac[e] for e in range(re))
-restr_11_2 = p.addConstrs(QH[i, 1] >= QH[i-1, 1] * 0.99495 + QH[i-1, 0] * 0.03 for i in range(1,t))
-restr_11_3 = p.addConstrs(QH[i, 2] >= QH[i-1, 2] * 0.99495 + QH[i-1, 1] * 0.02 for i in range(1,t))
-restr_11_4 = p.addConstrs(QH[i, 3] >= QH[i-1, 3] * 0.99495 + QH[i-1, 2] * 0.02 for i in range(1,t))
-restr_11_5 = p.addConstrs(QH[i, 4] >= QH[i-1, 4] * 0.99495 + QH[i-1, 3] * 0.015 for i in range(1,t))
+restr_11_1 = p.addConstrs(QH[i, 0] <= QH[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5)) for i in range(1,t)) # + quicksum(QM[i, e] * Nac[e] for e in range(re))
+restr_11_2 = p.addConstrs(QH[i, 1] <= QH[i-1, 1] * 0.99495 + QH[i-1, 0] * 0.03 for i in range(1,t))
+restr_11_3 = p.addConstrs(QH[i, 2] <= QH[i-1, 2] * 0.99495 + QH[i-1, 1] * 0.02 for i in range(1,t))
+restr_11_4 = p.addConstrs(QH[i, 3] <= QH[i-1, 3] * 0.99495 + QH[i-1, 2] * 0.02 for i in range(1,t))
+restr_11_5 = p.addConstrs(QH[i, 4] <= QH[i-1, 4] * 0.99495 + QH[i-1, 3] * 0.015 for i in range(1,t))
 
-restr_11_6 = p.addConstrs(QM[i, 0] >= QM[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5))for i in range(1,t))
-restr_11_7 = p.addConstrs(QM[i, 1] >= QM[i-1, 1] * 0.99495 + QM[i-1, 0] * 0.03 for i in range(1,t))
-restr_11_8 = p.addConstrs(QM[i, 2] >= QM[i-1, 2] * 0.99495 + QM[i-1, 1] * 0.02 for i in range(1,t))
-restr_11_9 = p.addConstrs(QM[i, 3] >= QM[i-1, 3] * 0.99495 + QM[i-1, 2] * 0.02 for i in range(1,t))
-restr_11_10 = p.addConstrs(QM[i, 4] >= QM[i-1, 4] * 0.99495 + QM[i-1, 3] * 0.015 for i in range(1,t))
+restr_11_6 = p.addConstrs(QM[i, 0] <= QM[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5))for i in range(1,t))
+restr_11_7 = p.addConstrs(QM[i, 1] <= QM[i-1, 1] * 0.99495 + QM[i-1, 0] * 0.03 for i in range(1,t))
+restr_11_8 = p.addConstrs(QM[i, 2] <= QM[i-1, 2] * 0.99495 + QM[i-1, 1] * 0.02 for i in range(1,t))
+restr_11_9 = p.addConstrs(QM[i, 3] <= QM[i-1, 3] * 0.99495 + QM[i-1, 2] * 0.02 for i in range(1,t))
+restr_11_10 = p.addConstrs(QM[i, 4] <= QM[i-1, 4] * 0.99495 + QM[i-1, 3] * 0.015 for i in range(1,t))
 
 # Restriccion 12 La inversión pública no puede superar el 2% del PBI del año anterior
-restr_12 = p.addConstrs(Inv_pub[i] <= 0.02 * PBI[i-1] for i in range(2,t))
+restr_12 = p.addConstrs(Inv_pub[i] <= 0.02 * PBI[i-1] for i in range(1,t))
 
 # Restriccion 13 Cantidad de casas que hay en la comuna
 restr_13 = p.addConstrs(QC[i] == 0.25 * Pob[i]  for i in range(t))
@@ -249,7 +262,7 @@ restr_21_a = p.addConstrs(W[i] >= WP[i-1] for i in range(1, t))
 
 # Restriccion 22 Limitar consumo agua en agricultura
 # Falta definir el segundo nivel pa que funcione bien porque solo funciona con el periodo 1
-#restr_21_b = p.addConstrs(WA[i] <= 250000000 for i in range(1, t))
+restr_21_b = p.addConstrs(WA[i] <= 290000000 for i in range(1, t))
 
 
 # # Restricciones duales productor
@@ -258,14 +271,14 @@ restr_21_a = p.addConstrs(W[i] >= WP[i-1] for i in range(1, t))
 restr_22_0 = p.addConstrs(H[0,j] == H_inicial[j] for j in range(c+1))
 restr_22 = p.addConstrs(quicksum(H[i,j] for j in range(c+1)) == H_total for i in range(t))
 
-# Restriccion b Agua disponible para la agricultura no debe ser sobrepasada
-restr_23 = p.addConstr(quicksum(A_c[j] * H[1,j] for j in range(c)) <= WA[1])
+# Restriccion 23 Agua disponible para la agricultura no debe ser sobrepasada
+rest_23 = p.addConstrs(quicksum(A_c[j] * H[i,j] for j in range(c)) <= WA[i] for i in range(1, t))
 
 # Restriccion c Producción mínima de un cultivo
-#restr_24 = p.addConstrs(H[i, j] >= H_min[j] for j in range(c) for i in range(t))
+restr_24 = p.addConstrs(H[i, j] >= H_min[j] for j in range(c) for i in range(t))
 
 # Restriccion d minimo para cultivar
-restr_25 = p.addConstrs(pi + alpha * A_c[j] + beta[j] >= precio_ton[j] *(1 + variaciones_precio[1][j][0]) * (1 - costos[j]) for j in range(c))
+restr_25 = p.addConstrs(pi + alpha * A_c[j] + beta[j] >= precio_ton[j] * (1 + variaciones_precio[1][j][0]/100) * (costos[j]) for j in range(c))
 
 # Restriccion z1
 restr_26 = p.addConstr(pi <= M * zeta[0])
@@ -284,11 +297,11 @@ restr_30 = p.addConstr( WA[1] - quicksum(A_c[j] * H[1, j] for j in range(c)) <= 
 restr_31 = p.addConstrs( H[1, k - 2] - H_min[k - 2] <= M * (1 - zeta[k]) for k in range(2, r))
 
 # Restriccion Exportaciones
-restr_32 = p.addConstrs(Exp[i] == quicksum(H[i,j] * ton_hectarea[j] * precio_ton[j] for j in range(c)) for i in range(1, t)) # * (1 - costos[j])  - inversion[j] * H[i,j]
+rest_32 = p.addConstrs(Exp[i] == quicksum(H[i,j] * ton_hectarea[j] * precio_ton[j] * (round(1 + ((var_precio[i-1][j][1] - var_precio[i-1][j][0]) * vau + var_precio[i-1][j][0])/100,2)) * costos[j] + inversion[j] * H[i,j] * ton_hectarea[j] / 100 for j in range(c)) for i in range(1, t)) # * (1 - costos[j])  - inversion[j] * H[i,j]
 
 # No puede aumentar en mas de un 25% ni disminuir mas de un 30%
 restr_33 = p.addConstrs(H[i, j] <= 1.25 * H[i-1, j] for j in range(c) for i in range(1, t))
-#rest_34 = p.addConstrs(H[i, j] >= 0.7 * H[i-1, j] for j in range(c) for i in range(1, t))
+rest_34 = p.addConstrs(H[i, j] >= 0.7 * H[i-1, j] for j in range(c) for i in range(1, t))
 
 # Cumplir con la mano de obra disponible
 
