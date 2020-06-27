@@ -21,7 +21,7 @@ Prom_i_m = 549 # ingreso promedio mujeres
 # Orden Cultivos: Palta, Uva de Mesa, Manzanas, Peras, Aceitunas, Uva vino, aceites
 c = 7 #cantidad de cultivos
 t = 11 #cantidad de periodos
-r = 9 #cantidad de variables de holgura
+r = 187 #Cantidad de variables de holgura
 H_total = 34749.49 #cantidad de hectareas disponibles, revisar porque depende de t
 H_inicial = [2000, 600, 775.86, 666.67, 2142.86, 2564.10, 10000.00, 16000.00]
 variaciones_precio = [
@@ -68,7 +68,7 @@ var_precio = [
     [[-3, 3], [-2, 6], [-1, 6], [0, 3], [-1, 5], [-3, 5], [-3, 3]],
     [[-1, 4], [-3, 4], [-2, 2], [-2, 4], [-4, 4], [-5, 4], [-3, 2]]
 ]
-vau = 1
+vau = 0
 
 costos = [0.6, 0.65, 0.8, 0.66, 0.7, 0.45, 0.65] #costos de cada cultivo, porcentaje respecto al precio
 inversion = [2112, 455, 48, 234.6, 891, 3025, 3150] #inversion para tener 1 ton de cada cultivo
@@ -78,8 +78,8 @@ precio_ton=[2640, 650, 230, 345, 1485, 2750, 4500] #precio venta por cada tonela
 kg_hectarea=[10000,25000,58000,45000,7000,7800,1000,0]
 ton_hectarea=[10, 25, 58, 45, 7, 7.8, 1, 0]
 A_c = [1981, 422, 822, 922, 900, 869, 14431] # Agua que consume cada cultivo
-
 H_min = [10, 4, 1.724137931, 2.222222222, 14.28571429, 12.82051282, 100]
+
 M = 100000
 CBS = 10 #capacidad bocas subterraneas
 
@@ -117,7 +117,7 @@ QC = p.addVars(t, lb = 0.0, name="Cantidad_Casas", vtype=GRB.INTEGER)
 # Cantidad de profesionales para el periodo t
 Prof = p.addVars(t, lb = 0.0, name="Cantidad_Profesionales", vtype=GRB.INTEGER)
 # Mano de obra agricultura
-MDOA = p.addVars(t, lb=0.0, name="Mano de obra en agricultura", vtype=GRB.INTEGER)
+MDOA = p.addVars(t, lb=0.0, name="Mano_de_obra_en_agricultura", vtype=GRB.INTEGER)
 
 # ## Variables de plantas de recuperacion/potabilizacion aguas
 # Cantidad de conexiones a alcantarillas que hay que hacer el periodo t
@@ -208,10 +208,10 @@ restr_8_h = p.addConstrs(QH[0, e] == hombres[e] for e in range(5))
 restr_8 = p.addConstrs(Pob[i] == quicksum(QM[i, e] + QH[i, e] for e in range(5)) for i in range(t))
 
 # Restriccion 9 Total de profesionales para el periodo t
-restr_9 = p.addConstrs(Prof[i] >=  quicksum(0.03 * QM[i, e] + 0.02 * QH[i, e] for e in range(3,5)) for i in range(t))
+restr_9 = p.addConstrs(Prof[i] >=  quicksum(0.03 * QM[i, e] + 0.02 * QH[i, e] for e in range(2,4)) for i in range(t))
 
 # Restriccion 10 Inmigración
-restr_10 = p.addConstrs(MDOA[i] == 0.55 * quicksum(QH[i, e] for e in range(3,5)) + 0.65 * quicksum(QM[i, e] for e in range(3,5)) for i in range(1, t))
+restr_10 = p.addConstrs(MDOA[i] >= 0.55 * quicksum(QH[i, e] for e in range(2,4)) + 0.65 * quicksum(QM[i, e] for e in range(2,4)) for i in range(1, t))
 
 # ni idea como esribirla
 
@@ -274,52 +274,68 @@ restr_21_a = p.addConstrs(W[i] >= WP[i-1] for i in range(1, t))
 # Falta definir el segundo nivel pa que funcione bien porque solo funciona con el periodo 1
 restr_21_b = p.addConstrs(WA[i] <= 290000000 for i in range(1, t))
 
-# Restriccion 23 Precio del cultivo c el periodo t
+# Restriccion 22 Precio del cultivo c el periodo t
 restr_22_0 = p.addConstrs(Precio[0,j] == precio_ton[j] for j in range(c))
 restrr_22 = p.addConstrs(Precio[i,j] == Precio[i-1, j] * (round(1 + ((var_precio[i-1][j][1] - var_precio[i-1][j][0]) * vau + var_precio[i-1][j][0])/100,2)) for j in range(c) for i in range(1, t))
 
 
-# # Restricciones duales productor para los primeros 5 periodos
+# # Restricciones duales productor para todos los periodos
 
 
 # Restriccion Definicion Exportaciones
-#rest_23 = p.addConstrs(Exp[i] == quicksum(H[i,j] * ton_hectarea[j] * Precio[i, j] * costos[j] + inversion[j] * H[i,j] * ton_hectarea[j] for j in range(c)) for i in range(1, t)) # * (1 - costos[j])  - inversion[j] * H[i,j]
+restr_23 = p.addConstrs(Exp[i] == quicksum(H[i,j] * ton_hectarea[j] * Precio[i, j] * costos[j] + inversion[j] * H[i,j] * ton_hectarea[j] for j in range(c)) for i in range(1, t))
 
 # Restriccion 24 Respetar cantidad de hectareas disponibles
 restr_24_0 = p.addConstrs(H[0,j] == H_inicial[j] for j in range(c+1))
-restr_24 = p.addConstrs(quicksum(H[i,j] for j in range(c+1)) == H_total for i in range(1, 6))
+restr_24 = p.addConstrs(quicksum(H[i,j] for j in range(c+1)) == H_total for i in range(1,t))
 
 # Restriccion 25 Agua disponible para la agricultura no debe ser sobrepasada
-restr_25 = p.addConstrs(quicksum(A_c[j] * H[i,j] for j in range(c)) <= WA[i] for i in range(1, 6))
+restr_25 = p.addConstrs(quicksum(A_c[j] * H[i,j] for j in range(c)) <= WA[i] for i in range(1, t))
 
 # Restriccion 26 Mano de obra para la agricultura
-restr_26 = p.addConstrs(quicksum(MOD_min[j] * H[i,j] for j in range(c)) <= MDOA[i] for i in range(1, 6))
+restr_26 = p.addConstrs(quicksum(MOD_min[j] * H[i,j] for j in range(c)) <= MDOA[i] for i in range(1, t))
 
 # Restriccion 27 Restringir el crecimiento maximo de los cultivos en un 25%
-restr_27 = p.addConstrs(H[i, j] <= 1.25 * H[i-1, j] for j in range(c) for i in range(1, 6))
+restr_27 = p.addConstrs(H[i, j] <= 1.25 * H[i-1, j] for j in range(c) for i in range(1, t))
 
 # Restriccion 28 Restringir disminucion maxima de los cultivos en un 30%
-rest_28 = p.addConstrs(H[i, j] >= 0.7 * H[i-1, j] for j in range(c) for i in range(1, 6))
+restr_28 = p.addConstrs(H[i, j] >= 0.7 * H[i-1, j] for j in range(c) for i in range(1, t))
 
 # Restriccion 29 Restricción del dual
-# restr_29 = p.addVars(quicksum(pi[i] for i in range(1, 6))
-# + A_c[j] * quicksum(alpha[i] for i in range(1, 6))
-# + MOD_min[j] * quicksum(delta[i] for i in range(1, 6))
-# -1.25 * quicksum(gamma[i, j] for i in range(1, 6))
-# + quicksum(gamma[i-1, j] for i in range(1, 6))
-# -0.7 * quicksum(beta[i, j] for i in range(1, 6))
-# + quicksum(beta[i-1, j] for i in range(1, 6)) >= quicksum(ton_hectarea[j] * Precio[i, j] * costos[j] + inversion[j] * ton_hectarea[j] for i in range(1, 6)) for j in range(c))
-#
+restr_29 = p.addVars(quicksum(pi[i] for i in range(1, 6)) + A_c[j] * quicksum(alpha[i] for i in range(1, 6))
++ MOD_min[j] * quicksum(delta[i] for i in range(1, 6)) - 1.25 * quicksum(gamma[i, j] for i in range(1, 6))
++ quicksum(gamma[i-1, j] for i in range(1, 6)) - 0.7 * quicksum(beta[i, j] for i in range(1, 6))
++ quicksum(beta[i-1, j] for i in range(1, 6)) >= quicksum(ton_hectarea[j] * Precio[i, j] * costos[j] + inversion[j] * ton_hectarea[j] for i in range(1, 6)) for j in range(c))
 
+# Restriccion 30 Holguras complementarias
+restr_30_1 = p.addConstrs(H_total - quicksum(H[i, j] for j in range(c+1)) <= M * (1 - zeta[i]) for i in range(1, t))
+restr_30_2 = p.addConstrs(WA[i-t] - quicksum(A_c[j] * H[i-t-1, j] for j in range(c)) <= M * (1 - zeta[i]) for i in range(1 + t, 2 * t))
+restr_30_3 = p.addConstrs(MDOA[i-2*t] - quicksum(MOD_min[j] * H[i-2*t-1, j] for j in range(c)) <= M *(1- zeta[i]) for i in range(1 + 2*t, 3 * t))
+
+restr_30_4_1 = p.addConstrs(0 - H[i-3*t, 0] + 1.25 * H[i-3*t-1, 0] <= M * (1-zeta[i]) for i in range(1+3*t,4 *t))
+restr_30_4_2 = p.addConstrs(0 - H[i-4*t, 1] + 1.25 * H[i-4*t-1, 1] <= M * (1-zeta[i]) for i in range(1+4*t,5 * t))
+restr_30_4_3 = p.addConstrs(0 - H[i-5*t, 2] + 1.25 * H[i-5*t-1, 2] <= M * (1-zeta[i]) for i in range(1+5*t,6 * t))
+restr_30_4_4 = p.addConstrs(0 - H[i-6*t, 3] + 1.25 * H[i-6*t-1, 3] <= M * (1-zeta[i]) for i in range(1+6*t,7 * t))
+restr_30_4_5 = p.addConstrs(0 - H[i-7*t, 4] + 1.25 * H[i-7*t-1, 4] <= M * (1-zeta[i]) for i in range(1+7*t,8 * t))
+restr_30_4_6 = p.addConstrs(0 - H[i-8*t, 5] + 1.25 * H[i-8*t-1, 5] <= M * (1-zeta[i]) for i in range(1+8*t,9 * t))
+restr_30_4_7 = p.addConstrs(0 - H[i-9*t, 6] + 1.25 * H[i-9*t-1, 6] <= M * (1-zeta[i]) for i in range(1+9*t,10 * t))
+
+restr_30_5_1 = p.addConstrs(0 - H[i-10*t, 0] + 0.7 * H[i-10*t-1, 0] <= M * (1-zeta[i]) for i in range(1+10*t,11 * t))
+restr_30_5_2 = p.addConstrs(0 - H[i-11*t, 1] + 0.7 * H[i-11*t-1, 1] <= M * (1-zeta[i]) for i in range(1+11*t,12 * t))
+restr_30_5_3 = p.addConstrs(0 - H[i-12*t, 2] + 0.7 * H[i-12*t-1, 2] <= M * (1-zeta[i]) for i in range(1+12*t,13 * t))
+restr_30_5_4 = p.addConstrs(0 - H[i-13*t, 3] + 0.7 * H[i-13*t-1, 3] <= M * (1-zeta[i]) for i in range(1+13*t,14 * t))
+restr_30_5_5 = p.addConstrs(0 - H[i-14*t, 4] + 0.7 * H[i-14*t-1, 4] <= M * (1-zeta[i]) for i in range(1+14*t,15 * t))
+restr_30_5_6 = p.addConstrs(0 - H[i-15*t, 5] + 0.7 * H[i-15*t-1, 5] <= M * (1-zeta[i]) for i in range(1+15*t,16 * t))
+restr_30_5_7 = p.addConstrs(0 - H[i-16*t, 6] + 0.7 * H[i-16*t-1, 6] <= M * (1-zeta[i]) for i in range(1+16*t,17 * t))
 
 p.update()
 p.optimize()
 p.printAttr('X')
 
-with open('resultados.csv', 'w', encoding='utf-8') as file:
-     writer = csv.writer(file)
-     for v in p.getVars():
-         writer.writerow([v.varName, v.x])
+# with open('resultados.csv', 'w', encoding='utf-8') as file:
+#      writer = csv.writer(file)
+#      for v in p.getVars():
+#          writer.writerow([v.varName, v.x])
 
 with open('resultados.txt', 'w', encoding='utf-8') as file:
     for v in p.getVars():
