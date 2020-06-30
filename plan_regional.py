@@ -336,5 +336,5 @@ for i in lista:
     conta += 1
     with open(f"Var_{conta}.txt", 'w', encoding='utf-8') as file_1:
         for elem in i:
-            linea = f"{elem[0]} {elem[1]}; {elem[2]}\n"
+            linea = f"{elem[0]} {elem[1]} {elem[2]}\n"
             file_1.write(linea)
