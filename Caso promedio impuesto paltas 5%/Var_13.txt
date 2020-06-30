@@ -7,5 +7,5 @@ Cantidad_Profesionales 5  655
 Cantidad_Profesionales 6  661
 Cantidad_Profesionales 7  667
 Cantidad_Profesionales 8  673
-Cantidad_Profesionales 9  680
+Cantidad_Profesionales 9  679
 Cantidad_Profesionales 10  686
