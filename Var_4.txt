@@ -1,0 +1,11 @@
+Inv_pub 0  0
+Inv_pub 1  5.28e+06
+Inv_pub 2  5.13987e+06
+Inv_pub 3  6.39782e+06
+Inv_pub 4  7.1636e+06
+Inv_pub 5  8.57661e+06
+Inv_pub 6  1.00784e+07
+Inv_pub 7  1.12393e+07
+Inv_pub 8  1.20491e+07
+Inv_pub 9  1.28978e+07
+Inv_pub 10  1.35096e+07

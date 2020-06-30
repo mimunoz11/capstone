@@ -1,0 +1,11 @@
+Agua_Subterranea 0  -1.49012e-08
+Agua_Subterranea 1  1.656e+06
+Agua_Subterranea 2  1.39035e+06
+Agua_Subterranea 3  2.55913e+06
+Agua_Subterranea 4  2.65824e+06
+Agua_Subterranea 5  3.21864e+06
+Agua_Subterranea 6  1.09456e+06
+Agua_Subterranea 7  3.8877e+06
+Agua_Subterranea 8  3.88765e+06
+Agua_Subterranea 9  3.88792e+06
+Agua_Subterranea 10  3.88784e+06

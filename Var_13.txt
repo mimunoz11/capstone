@@ -1,0 +1,11 @@
+Cantidad_Profesionales 0  628
+Cantidad_Profesionales 1  633
+Cantidad_Profesionales 2  639
+Cantidad_Profesionales 3  644
+Cantidad_Profesionales 4  650
+Cantidad_Profesionales 5  655
+Cantidad_Profesionales 6  661
+Cantidad_Profesionales 7  641
+Cantidad_Profesionales 8  615
+Cantidad_Profesionales 9  596
+Cantidad_Profesionales 10  585

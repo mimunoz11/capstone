@@ -1,0 +1,11 @@
+Poblacion 0  48000
+Poblacion 1  49600
+Poblacion 2  51240
+Poblacion 3  52944
+Poblacion 4  54668
+Poblacion 5  56436
+Poblacion 6  58248
+Poblacion 7  59224
+Poblacion 8  59448
+Poblacion 9  59980
+Poblacion 10  60944
