@@ -309,12 +309,32 @@ p.update()
 p.optimize()
 p.printAttr('X')
 
-with open('pbi.csv', 'w', encoding='utf-8') as file:
-     writer = csv.writer(file)
-     for v in p.getVars():
-         if "PBI" in v.varName:
-            writer.writerow([v.varName, v.x])
+
 
 with open('resultados.txt', 'w', encoding='utf-8') as file:
     for v in p.getVars():
         file.write('%s %g \n' % (v.varName, v.x))
+
+lista = []
+for i in range(27):
+    lista.append([])
+with open('resultados.txt', 'r', encoding='utf-8') as file:
+    actual = "PBI"
+    cont = 0
+    for linea in file:
+        if cont < 26:
+            fila = linea.strip().split(']')
+            datos = [fila[0].split('[')[0], fila[0].split('[')[1], fila[1]]
+            if datos[0] == actual:
+                lista[cont].append(datos)
+            else:
+                cont += 1
+                actual = datos[0]
+                lista[cont].append(datos)
+conta = 0
+for i in lista:
+    conta += 1
+    with open(f"Var_{conta}.txt", 'w', encoding='utf-8') as file_1:
+        for elem in i:
+            linea = f"{elem[0]} {elem[1]}; {elem[2]}\n"
+            file_1.write(linea)
