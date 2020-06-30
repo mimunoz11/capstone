@@ -1,0 +1,11 @@
+Capacidad_diaria_Planta_Potable 0  5760
+Capacidad_diaria_Planta_Potable 1  5760
+Capacidad_diaria_Planta_Potable 2  5760
+Capacidad_diaria_Planta_Potable 3  5760
+Capacidad_diaria_Planta_Potable 4  5760
+Capacidad_diaria_Planta_Potable 5  5760
+Capacidad_diaria_Planta_Potable 6  5760
+Capacidad_diaria_Planta_Potable 7  5760
+Capacidad_diaria_Planta_Potable 8  5760
+Capacidad_diaria_Planta_Potable 9  7200
+Capacidad_diaria_Planta_Potable 10  7200

@@ -1,0 +1,11 @@
+Agua_Potable 0  2.1024e+06
+Agua_Potable 1  2.32035e+06
+Agua_Potable 2  2.24431e+06
+Agua_Potable 3  2.3179e+06
+Agua_Potable 4  2.39341e+06
+Agua_Potable 5  2.47085e+06
+Agua_Potable 6  2.55021e+06
+Agua_Potable 7  2.59296e+06
+Agua_Potable 8  2.6033e+06
+Agua_Potable 9  2.62782e+06
+Agua_Potable 10  2.67127e+06

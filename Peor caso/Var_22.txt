@@ -1,0 +1,11 @@
+Agua_Total 0  9e+07
+Agua_Total 1  9.0973e+07
+Agua_Total 2  1.56053e+08
+Agua_Total 3  2.12492e+08
+Agua_Total 4  2.94933e+08
+Agua_Total 5  3.84273e+08
+Agua_Total 6  4.66248e+08
+Agua_Total 7  5.80102e+08
+Agua_Total 8  6.93726e+08
+Agua_Total 9  7.80148e+08
+Agua_Total 10  8.66036e+08
