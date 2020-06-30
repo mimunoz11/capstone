@@ -1,0 +1,11 @@
+Exportaciones 0  0
+Exportaciones 1  2.92279e+08
+Exportaciones 2  3.46854e+08
+Exportaciones 3  3.73479e+08
+Exportaciones 4  4.22967e+08
+Exportaciones 5  4.76014e+08
+Exportaciones 6  5.0376e+08
+Exportaciones 7  5.20856e+08
+Exportaciones 8  5.23386e+08
+Exportaciones 9  5.30189e+08
+Exportaciones 10  5.29837e+08
