@@ -1,0 +1,11 @@
+Inv_priv 0  0
+Inv_priv 1  1.32e+07
+Inv_priv 2  1.27507e+07
+Inv_priv 3  1.56439e+07
+Inv_priv 4  1.73274e+07
+Inv_priv 5  2.02861e+07
+Inv_priv 6  2.35926e+07
+Inv_priv 7  2.56037e+07
+Inv_priv 8  2.69582e+07
+Inv_priv 9  2.73495e+07
+Inv_priv 10  2.80269e+07

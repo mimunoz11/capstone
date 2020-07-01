@@ -1,0 +1,11 @@
+Consumo_familias 0  0
+Consumo_familias 1  1.25086e+07
+Consumo_familias 2  1.26263e+07
+Consumo_familias 3  1.27469e+07
+Consumo_familias 4  1.28697e+07
+Consumo_familias 5  1.29948e+07
+Consumo_familias 6  1.31234e+07
+Consumo_familias 7  1.28921e+07
+Consumo_familias 8  1.24035e+07
+Consumo_familias 9  1.20256e+07
+Consumo_familias 10  1.1805e+07

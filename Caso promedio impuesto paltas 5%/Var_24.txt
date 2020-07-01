@@ -1,0 +1,11 @@
+Aumento_capacidad_Plantas_Aguas_Servidas 0  0
+Aumento_capacidad_Plantas_Aguas_Servidas 1  1
+Aumento_capacidad_Plantas_Aguas_Servidas 2  -0
+Aumento_capacidad_Plantas_Aguas_Servidas 3  1
+Aumento_capacidad_Plantas_Aguas_Servidas 4  1
+Aumento_capacidad_Plantas_Aguas_Servidas 5  -0
+Aumento_capacidad_Plantas_Aguas_Servidas 6  1
+Aumento_capacidad_Plantas_Aguas_Servidas 7  1
+Aumento_capacidad_Plantas_Aguas_Servidas 8  -0
+Aumento_capacidad_Plantas_Aguas_Servidas 9  1
+Aumento_capacidad_Plantas_Aguas_Servidas 10  -0

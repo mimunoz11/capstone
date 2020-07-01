@@ -1,0 +1,11 @@
+Agua_Agricultura 0  0
+Agua_Agricultura 1  1.63934e+08
+Agua_Agricultura 2  1.2133e+08
+Agua_Agricultura 3  1.29761e+08
+Agua_Agricultura 4  9.91525e+07
+Agua_Agricultura 5  7.90564e+07
+Agua_Agricultura 6  6.6086e+07
+Agua_Agricultura 7  5.76676e+07
+Agua_Agricultura 8  5.14104e+07
+Agua_Agricultura 9  4.60946e+07
+Agua_Agricultura 10  2.99648e+07

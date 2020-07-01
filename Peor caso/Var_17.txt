@@ -1,0 +1,11 @@
+Capacidad_diaria_Planta_Aguas_Servidas 0  2765
+Capacidad_diaria_Planta_Aguas_Servidas 1  4205
+Capacidad_diaria_Planta_Aguas_Servidas 2  4205
+Capacidad_diaria_Planta_Aguas_Servidas 3  5645
+Capacidad_diaria_Planta_Aguas_Servidas 4  5645
+Capacidad_diaria_Planta_Aguas_Servidas 5  5645
+Capacidad_diaria_Planta_Aguas_Servidas 6  5645
+Capacidad_diaria_Planta_Aguas_Servidas 7  5645
+Capacidad_diaria_Planta_Aguas_Servidas 8  5645
+Capacidad_diaria_Planta_Aguas_Servidas 9  5645
+Capacidad_diaria_Planta_Aguas_Servidas 10  7085
