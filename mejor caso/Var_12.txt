@@ -1,0 +1,11 @@
+Cantidad_Casas 0  12000
+Cantidad_Casas 1  12400
+Cantidad_Casas 2  12810
+Cantidad_Casas 3  13230
+Cantidad_Casas 4  13660
+Cantidad_Casas 5  14102
+Cantidad_Casas 6  14554
+Cantidad_Casas 7  14800
+Cantidad_Casas 8  14856
+Cantidad_Casas 9  14990
+Cantidad_Casas 10  15227

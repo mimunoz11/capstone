@@ -1,0 +1,11 @@
+Importaciones 0  0
+Importaciones 1  8.3328e+07
+Importaciones 2  8.60832e+07
+Importaciones 3  8.89459e+07
+Importaciones 4  9.18422e+07
+Importaciones 5  9.48125e+07
+Importaciones 6  9.78566e+07
+Importaciones 7  9.94963e+07
+Importaciones 8  9.98726e+07
+Importaciones 9  1.0078e+08
+Importaciones 10  1.02386e+08

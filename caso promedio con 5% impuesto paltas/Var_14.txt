@@ -1,0 +1,11 @@
+Mano_de_obra_en_agricultura 0  -0
+Mano_de_obra_en_agricultura 1  14615
+Mano_de_obra_en_agricultura 2  15107
+Mano_de_obra_en_agricultura 3  14403
+Mano_de_obra_en_agricultura 4  14867
+Mano_de_obra_en_agricultura 5  15634
+Mano_de_obra_en_agricultura 6  15774
+Mano_de_obra_en_agricultura 7  15918
+Mano_de_obra_en_agricultura 8  16067
+Mano_de_obra_en_agricultura 9  16222
+Mano_de_obra_en_agricultura 10  16383

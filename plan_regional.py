@@ -36,8 +36,19 @@ var_precio = [
     [[-3, 3], [-2, 6], [-1, 6], [0, 3], [-1, 5], [-3, 5], [-3, 3]],
     [[-1, 4], [-3, 4], [-2, 2], [-2, 4], [-4, 4], [-5, 4], [-3, 2]]
 ]
-
-vau = 1
+var_precio_impuesto_paltas = [
+    [[-8, -3], [0, 5], [-5, 4], [-5, 0], [-4, 3], [-2, 5], [-5, 2]],
+    [[-7, 2], [0, 6], [0, 3], [-1, 5], [-2, 3], [0, 5], [0, 7]],
+    [[-7, -3], [-1, 4], [-5, 4], [-2, 3], [0, 4], [0, 3], [0, 3]],
+    [[-7, 3], [-3, 7], [-1, 6], [-2, 2], [-4, 6], [-4, 6], [-4, 3]],
+    [[-5, -3], [-2, 7], [-5, 2], [-5, 7], [-3, 7], [-3, 5], [0, 6] ],
+    [[-7, 0], [-5, 2], [-3, 4], [0, 4], [-3, 0], [-3, 3], [-3, 0]],
+    [[-5, -3], [-4, 2], [-3, 3], [-3, 1], [-1, 1], [-3, 3], [0, 3]],
+    [[-9, -1], [-4, 5], [-3, 5], [-2, 5], [-3, 2], [-2, 3], [0, 5]],
+    [[-8, -2], [-2, 6], [-1, 6], [0, 3], [-1, 5], [-3, 5], [-3, 3]],
+    [[-6, -1], [-3, 4], [-2, 2], [-2, 4], [-4, 4], [-5, 4], [-3, 2]]
+]
+vau= 0.5
 
 costos = [0.6, 0.65, 0.8, 0.66, 0.7, 0.45, 0.65] #costos de cada cultivo, porcentaje respecto al precio
 inversion = [2112, 455, 48, 234.6, 891, 3025, 3150] #inversion para tener 1 ton de cada cultivo
@@ -127,6 +138,7 @@ Precio = p.addVars(t,c, lb=0.0, name="Precio", vtype=GRB.CONTINUOUS)
 
 # Variables Duales
 
+
 # Variable dual pi
 pi = p.addVars(t, lb = 0.0, name="pi", vtype=GRB.CONTINUOUS)
 # Variables duales beta, una para cada cultivo
@@ -139,6 +151,7 @@ gamma = p.addVars(t, c, lb =0.0, name="gamma", vtype= GRB.BINARY)
 delta = p.addVars(t, lb=0.0, name="delta", vtype=GRB.CONTINUOUS)
 # Variables z
 zeta = p.addVars(r, lb=0.0, name="zeta", vtype=GRB.BINARY)
+
 
 # FUNCION OBJETIVO
 
@@ -211,14 +224,15 @@ restr_13 = p.addConstrs(QC[i] == 0.25 * Pob[i]  for i in range(t))
 
 # Restriccion 14 Respetar cantidad total de agua disponible para todos los periodos
     # m3 de agua en toda la comuna - las 16000 sin plantar
-restr_14_0 = p.addConstr(W[0] == WL[0] * 24000 * 10 * 0.5  + WS[0])
+restr_14_0 = p.addConstr(W[0] == WL[0] * 24000 * 10 * 0.5  + WS[0]- WA[0])
+restr_14_1 = p.addConstr(WA[0] == quicksum(H[0,j] * A_c[j] for j in range(c)))
     # agua de lluvia considera los terrenos agricoals utilizados mas el terreno urbano
-restr_14 = p.addConstrs(W[i] == W[i-1] + WL[i] * 10 * (quicksum(H[i, j] for j in range(c)) + 5250.51) + WS[i] + WR[i] - WA[i] - WI - WP[i] for i in range(1, t))
+restr_14 = p.addConstrs(W[i] == W[i-1] * 0.1 + WL[i] * 10 * (quicksum(H[i, j] for j in range(c)) + 5250.51) + WS[i] + WR[i] - WA[i] - WA[i-1] - WI - WP[i] for i in range(1, t))
 
 # Restriccion 15 Respetar producción de agua potable, min 120 lts/dia, max 150 lts/dia, produccion de agua potable < capacidad plantas potables + agua recuperada
-restr_15_arriba = p.addConstrs(0.12 * Pob[i] * 365 <= WP[i] for i in range(t))
-restr_15_abajo = p.addConstrs(0.15 * Pob[i] * 365 >= WP[i] for i in range(t))
-restr_15_prod = p.addConstrs(WP[i] <= 365 * CPP[i] + WR[i] for i in range(t))
+restr_15_arriba = p.addConstrs(0.12 * Pob[i] * 365 <= WP[i] for i in range(1, t))
+restr_15_abajo = p.addConstrs(0.15 * Pob[i] * 365 >= WP[i] for i in range(1, t))
+restr_15_prod = p.addConstrs(WP[i] <= 365 * CPP[i] + WR[i] for i in range(1, t))
 
 # Restriccion 16 Respetar conexión a alcantarillas (Mínimo 60% de las casas y si se construyeron no se pueden sacar)
 # CAMBIO EN LA DEFINICION DE QCA Y EN EL LIMITE SUPERIOR
@@ -231,6 +245,7 @@ restr_16_1 = p.addConstrs(QCA[i] >= QCA[i - 1] for i in range(1, t))
 # Restriccion 17 Agua total recuperada por la planta de Aguas Servidas
 # CAMBIA LA RELACION ENTRE QCA/QC POR LO QUE EL 0.6 DEBERIA CAMBIAR
 restr_17_abajo = p.addConstrs(WR[i] >= 0.8 * WP[i] * 0.6 for i in range(1, t))
+restr_17_arriba = p.addConstrs(WR[i] <= 0.8 * WP[i] for i in range(1, t))
 restr_17_prod = p.addConstrs(WR[i] <= 365 * CPA[i]  for i in range(t))
 
 # Restriccion 18 Aumento de capacidad al crear planta de potabilizacion
@@ -245,11 +260,10 @@ restr_19 = p.addConstrs(CPA[i] == CPA[i-1] + 60 * Y[i] * 24 for i in range(1, t)
 restr_20 = p.addConstrs(WS[i] <= 450 * 8640 for i in range(1, t))
 
 # Restriccion 21 Asegurar agua potable para prox año
-# NO NECESARIA
-# restr_21_a = p.addConstrs(W[i] >= WP[i-1] for i in range(1, t))
+restr_21_a = p.addConstrs(W[i] >= WP[i-1] for i in range(1, t))
 
 # Restriccion 22 Limitar consumo agua en agricultura
-restr_21_b = p.addConstrs(WA[i] <= 190000000 for i in range(1, t))
+restr_21_b = p.addConstrs(WA[i] <= 150000000 for i in range(1, t))
 
 # Restriccion 22 Precio del cultivo c el periodo t
 restr_22_0 = p.addConstrs(Precio[0,j] == precio_ton[j] for j in range(c))

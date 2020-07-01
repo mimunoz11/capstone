@@ -1,0 +1,11 @@
+Aumento_capacidad_Plantas_Potabilizadoras 0  0
+Aumento_capacidad_Plantas_Potabilizadoras 1  -0
+Aumento_capacidad_Plantas_Potabilizadoras 2  -0
+Aumento_capacidad_Plantas_Potabilizadoras 3  -0
+Aumento_capacidad_Plantas_Potabilizadoras 4  -0
+Aumento_capacidad_Plantas_Potabilizadoras 5  0
+Aumento_capacidad_Plantas_Potabilizadoras 6  -0
+Aumento_capacidad_Plantas_Potabilizadoras 7  1
+Aumento_capacidad_Plantas_Potabilizadoras 8  1
+Aumento_capacidad_Plantas_Potabilizadoras 9  1
+Aumento_capacidad_Plantas_Potabilizadoras 10  1

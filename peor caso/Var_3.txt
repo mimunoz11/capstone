@@ -1,0 +1,11 @@
+Gasto_Gobierno 0  0
+Gasto_Gobierno 1  1.52e+07
+Gasto_Gobierno 2  1.52375e+07
+Gasto_Gobierno 3  1.66092e+07
+Gasto_Gobierno 4  1.75694e+07
+Gasto_Gobierno 5  1.89287e+07
+Gasto_Gobierno 6  2.04415e+07
+Gasto_Gobierno 7  2.13768e+07
+Gasto_Gobierno 8  2.19226e+07
+Gasto_Gobierno 9  2.23423e+07
+Gasto_Gobierno 10  2.26567e+07

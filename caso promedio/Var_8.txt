@@ -1,0 +1,11 @@
+Gastos 0  0
+Gastos 1  4.24194e+07
+Gastos 2  4.55247e+07
+Gastos 3  4.3953e+07
+Gastos 4  4.40149e+07
+Gastos 5  4.23486e+07
+Gastos 6  4.03437e+07
+Gastos 7  3.88168e+07
+Gastos 8  3.74551e+07
+Gastos 9  3.67972e+07
+Gastos 10  3.73577e+07

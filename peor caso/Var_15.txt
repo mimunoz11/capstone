@@ -1,0 +1,11 @@
+Cantidad_Alcantarillas 0  7200
+Cantidad_Alcantarillas 1  7440
+Cantidad_Alcantarillas 2  7686
+Cantidad_Alcantarillas 3  8999
+Cantidad_Alcantarillas 4  8999
+Cantidad_Alcantarillas 5  8999
+Cantidad_Alcantarillas 6  8999
+Cantidad_Alcantarillas 7  8999
+Cantidad_Alcantarillas 8  8999
+Cantidad_Alcantarillas 9  8999
+Cantidad_Alcantarillas 10  13903

@@ -1,0 +1,11 @@
+Agua_Recuperada_Alcantarillado 0  0
+Agua_Recuperada_Alcantarillado 1  1.33292e+06
+Agua_Recuperada_Alcantarillado 2  1.53482e+06
+Agua_Recuperada_Alcantarillado 3  1.11267e+06
+Agua_Recuperada_Alcantarillado 4  1.14892e+06
+Agua_Recuperada_Alcantarillado 5  1.18609e+06
+Agua_Recuperada_Alcantarillado 6  1.22419e+06
+Agua_Recuperada_Alcantarillado 7  1.2442e+06
+Agua_Recuperada_Alcantarillado 8  1.24925e+06
+Agua_Recuperada_Alcantarillado 9  1.26077e+06
+Agua_Recuperada_Alcantarillado 10  1.41492e+06
