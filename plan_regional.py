@@ -1,17 +1,14 @@
 # Modelación planificación regional
 
 from gurobipy import *
-import csv
 
 
 # Definición de Parámetros
 
 mujeres = [3900, 2600, 5980, 7020, 6500]
 hombres = [3960, 2200, 5940, 5940, 3960]
-Nac = [0, 30, 120, 40, 0] #tasa de nacimiento por rango etareo
+Nac = [0, 30, 120, 40, 0] # tasa de nacimiento por rango etareo
 
-# Agro-industria, Comercio, Gobierno, Profesionales, Desempleados, Pensionados
-# ojo hay que incluir los profesionales externos que son 960 y ganan 3000
 ingreso_mensual = [550, 550, 450, 2500, 200, 300]
 dist_empleos_m = [0.55, 0.2, 0.07, 0.03, 0.15]
 dist_empleos_h = [0.65, 0.1, 0.07, 0.02, 0.16]
@@ -19,10 +16,10 @@ Prom_i_h = 526 # ingreso promedio hombres
 Prom_i_m = 549 # ingreso promedio mujeres
 
 # Orden Cultivos: Palta, Uva de Mesa, Manzanas, Peras, Aceitunas, Uva vino, aceites
-c = 7 #cantidad de cultivos
-t = 11 #cantidad de periodos
-r = 187 #Cantidad de variables de holgura
-H_total = 34749.49 #cantidad de hectareas disponibles, revisar porque depende de t
+c = 7 # cantidad de cultivos
+t = 11 # cantidad de periodos
+r = 187 # Cantidad de variables de holgura
+H_total = 34749.49 # cantidad de hectareas disponibles, revisar porque depende de t
 H_inicial = [2000, 600, 775.86, 666.67, 2142.86, 2564.10, 10000.00, 16000.00]
 var_precio = [
     [[-3, 2], [0, 5], [-5, 4], [-5, 0], [-4, 3], [-2, 5], [-5, 2]],
@@ -48,26 +45,24 @@ var_precio_impuesto_paltas = [
     [[-8, -2], [-2, 6], [-1, 6], [0, 3], [-1, 5], [-3, 5], [-3, 3]],
     [[-6, -1], [-3, 4], [-2, 2], [-2, 4], [-4, 4], [-5, 4], [-3, 2]]
 ]
-vau= 0.5
 
-costos = [0.6, 0.65, 0.8, 0.66, 0.7, 0.45, 0.65] #costos de cada cultivo, porcentaje respecto al precio
-inversion = [2112, 455, 48, 234.6, 891, 3025, 3150] #inversion para tener 1 ton de cada cultivo
+vau= 0.5 # variable aleatoria uniforme. Varia entre 0 y 1 y se utiliza para obtener los precios
+
+costos = [0.6, 0.65, 0.8, 0.66, 0.7, 0.45, 0.65] # costos de cada cultivo, porcentaje respecto al precio
+inversion = [2112, 455, 48, 234.6, 891, 3025, 3150] # inversion para tener 1 ton de cada cultivo
 MOD_min =  [0.74, 2.48, 2.88, 3.35,  1.04, 1.16, 0.22] # Mano de obra minima por hectarea
-precio_kg = [2.64, 0.65, 0.120, 0.345, 1.485, 2.75, 4.5]
-precio_ton=[2640, 650, 230, 345, 1485, 2750, 4500] #precio venta por cada tonelada, ordenadas según excel
-kg_hectarea=[10000,25000,58000,45000,7000,7800,1000,0]
-ton_hectarea=[10, 25, 58, 45, 7, 7.8, 1, 0]
+precio_ton=[2640, 650, 230, 345, 1485, 2750, 4500] # precio venta de cada cultivo por tonelada
+ton_hectarea=[10, 25, 58, 45, 7, 7.8, 1, 0] # Productividad de los cultivos
 A_c = [1981, 422, 822, 922, 900, 869, 14431] # Agua que consume cada cultivo
-H_min = [10, 4, 1.724137931, 2.222222222, 14.28571429, 12.82051282, 100]
+H_min = [10, 4, 1.724137931, 2.222222222, 14.28571429, 12.82051282, 100] # Cantidad de hectarias minimas para producir cada cultivo
 
-M = 10000000
-CBS = 10 #capacidad bocas subterraneas
+M = 10000000 # Valor suficientemente grande utilizado en las variables de holgura
 
 p = Model("planificacion") # Se define el modelo
 
 # VARIABLES
 
-## Variables para calcular PBI
+## Variables para calcular PBI, el cual se mide de acuerdo al metodo de gastos
 # PBI
 PBI = p.addVars(t, lb = 0.0, name="PBI", vtype=GRB.CONTINUOUS)
 # Consumo familias para el año t
@@ -83,10 +78,10 @@ Imp = p.addVars(t, lb = 0.0, name="Importaciones", vtype=GRB.CONTINUOUS)
 # Gasto de los productores para el año t
 Exp = p.addVars(t, lb = 0.0, name="Exportaciones", vtype=GRB.CONTINUOUS)
 # Gastos totales realizado fuera de la comuna para el periodo t
-Gastos = p.addVars(t, lb = 0.0, name="Gastos", vtype=GRB.CONTINUOUS)
+Gastos_ext = p.addVars(t, lb = 0.0, name="Gastos_externos", vtype=GRB.CONTINUOUS)
 
 ## Variables para calcular la cantidad de gente y casas
-# # Población total para el periodo t
+# Población total para el periodo t
 Pob = p.addVars(t, lb= 0.0, name="Poblacion", vtype=GRB.INTEGER)
 # Cantidad de mujeres para el periodo t
 QM = p.addVars(t, 5, lb= 0.0, name="Cantidad_Mujeres", vtype=GRB.INTEGER)
@@ -118,15 +113,15 @@ WS = p.addVars(t, lb = 0.0, name="Agua_Subterranea", vtype=GRB.CONTINUOUS) # 394
 WA = p.addVars(t, lb = 0.0, name="Agua_Agricultura", vtype=GRB.CONTINUOUS)
 # Agua que se consume en el sector de la industria ES PARAMETRO
 WI = 1296000
-# Agua de lluvia disponible para el periodo t, SON PARAMETROS, CAMBIAR A LITROS
+# Agua de lluvia disponible para el periodo t, si bien son parametros, solo se considera en las zonas donde están plantados los cultivos, lo cual varía cada año
 WL = [750, 780, 800, 850, 830, 750, 650, 750, 725, 600, 550]
 # Agua total disponible para el periodo t
 W = p.addVars(t, lb = 0.0, name="Agua_Total", vtype=GRB.CONTINUOUS)
 
 ## Variables de decision
-#Cantidad de plantas potabilizadoras que se construyen en el periodo t AUMENTO CAPACIDAD PLANTA
+# Cantidad de plantas potabilizadoras que se construyen en el periodo t AUMENTO CAPACIDAD PLANTA
 X = p.addVars(t, lb = 0.0, name="Aumento_capacidad_Plantas_Potabilizadoras", vtype=GRB.BINARY)
-#Cantidad de plantas Aguas Servidas que se construyen en el periodo t AUMENTO CAPACIDAD PLANTA
+# Cantidad de plantas Aguas Servidas que se construyen en el periodo t AUMENTO CAPACIDAD PLANTA
 Y = p.addVars(t, lb = 0.0, name="Aumento_capacidad_Plantas_Aguas_Servidas", vtype= GRB.BINARY)
 
 ## Variables de los productores
@@ -135,10 +130,7 @@ H = p.addVars(t, c, lb = 0.0, name="Hectareas_nuevas_plantadas", vtype=GRB.CONTI
 # precio de una tonelada del cultivo c en el periodo t
 Precio = p.addVars(t,c, lb=0.0, name="Precio", vtype=GRB.CONTINUOUS)
 
-
-# Variables Duales
-
-
+## Variables Duales
 # Variable dual pi
 pi = p.addVars(t, lb = 0.0, name="pi", vtype=GRB.CONTINUOUS)
 # Variables duales beta, una para cada cultivo
@@ -161,21 +153,19 @@ p.setObjective(quicksum(PBI[i] for i in range(t)), GRB.MAXIMIZE)
 
 # Restriccion 1 Definición de PBI
 restr_1_0 = p.addConstr(PBI[0] == 5500 * Pob[0])
-restr_1 = p.addConstrs(PBI[i] ==  Exp[i] - Gastos[i] for i in range(1, t))
+restr_1 = p.addConstrs(PBI[i] ==  Exp[i] - Gastos_ext[i] for i in range(1, t))
 
-# Restricción 2 Gastos totales
-restr_2 = p.addConstrs(Gastos[i] == - Cons[i] - GG[i] - Inv_priv[i] + Imp[i]  for i in range(1, t))
+# Restricción 2 Gastos externos, busca maximizar las importaciones, de lo contrario el modelo las hace cero
+restr_2 = p.addConstrs(Gastos_ext[i] == - Cons[i] - GG[i] - Inv_priv[i] + Imp[i]  for i in range(1, t))
 
 # Restriccion 3 Gastos en empleo para el año t
 restr_3 = p.addConstrs(Cons[i] == 0.75 * quicksum(QM[i, e] * Prom_i_m + QH[i, e] * Prom_i_h for e in range(2, 4)) + 0.75 * 300 * (QM[i, 4] + QH[i, 4]) for i in range(1, t))
 
 # Restriccion 4 Gasto del Gobierno para el periodo t
-restr_4 = p.addConstrs(GG[i] == 200 * Pob[i] + Inv_pub[i]  for i in range(1, t))
+restr_4 = p.addConstrs(GG[i] == 200 * Pob[i] + Inv_pub[i] for i in range(1, t))
 
 # Restriccion 5 Inversión pública realizada el año t
-# Se supone que el gasto se reparte en 3 años, pero esta como si se repartiera solo en uno
-# WS NO SE SI ES UN GASTO QUE NOS CONVIENE O NO PERO COMO AUMENTA EL PIB SIEMPRE, SE USA AUNQUE NO SEA NECESARIO
-# SIEMPRE SE HACE UN AUMENTO A LAS PLANTAS PORQUE INFLUYE EN EL PIB, AUN CUANDO NO ES NECESARIO
+# considera la ampliación de las plantas, la construccion de alcantarillas y el costo de obtener agua subterranea
 restr_5 = p.addConstrs(Inv_pub[i] == 660000 * (X[i] + Y[i]) + 2000 * (QCA[i] - QCA[i-1]) + 2.5 * WS[i] for i in range(1, t))
 
 # Restriccion 6 Inversión privada realizada el año t
@@ -196,11 +186,9 @@ restr_9 = p.addConstrs(Prof[i] >=  quicksum(0.03 * QM[i, e] + 0.02 * QH[i, e] fo
 # SE LIMITA POR ARRIBA PARA QUE MDOA NO SUPERE LA CANTIDAD DE POBLACION DE LA COMUNA
 restr_10 = p.addConstrs(MDOA[i] <= 0.55 * quicksum(QH[i, e] for e in range(2,4)) + 0.65 * quicksum(QM[i, e] for e in range(2,4)) for i in range(1, t))
 
-
-
 # Restriccion 11 Población para el próximo periodo
 # LOS RANGOS 0, 1 Y 4 CAMBIO EL SIGNO PORQUE DE LO CONTRARIO SE HACEN CERO DEBIDO A QUE NO APORTAN INGRESOS A LA COMUNA Y LA OPTIMIZACION LOS ELIMINA
-restr_11_1 = p.addConstrs(QH[i, 0] >= QH[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5)) for i in range(1,t)) # + quicksum(QM[i, e] * Nac[e] for e in range(re))
+restr_11_1 = p.addConstrs(QH[i, 0] >= QH[i-1, 0] * 0.99495 + quicksum(QM[i - 1 ,e]  * 0.0005 * Nac[e] for e in range(5)) for i in range(1,t))
 restr_11_2 = p.addConstrs(QH[i, 1] >= QH[i-1, 1] * 0.99495 + QH[i-1, 0] * 0.03 for i in range(1,t))
 restr_11_3 = p.addConstrs(QH[i, 2] <= QH[i-1, 2] * 0.99495 + QH[i-1, 1] * 0.02 for i in range(1,t))
 restr_11_4 = p.addConstrs(QH[i, 3] <= QH[i-1, 3] * 0.99495 + QH[i-1, 2] * 0.02 for i in range(1,t))
@@ -223,19 +211,18 @@ restr_13 = p.addConstrs(QC[i] == 0.25 * Pob[i]  for i in range(t))
 
 
 # Restriccion 14 Respetar cantidad total de agua disponible para todos los periodos
-    # m3 de agua en toda la comuna - las 16000 sin plantar
+    # m3 de agua en toda la comuna menos las 16000 sin plantar
 restr_14_0 = p.addConstr(W[0] == WL[0] * 24000 * 10 * 0.5  + WS[0]- WA[0])
 restr_14_1 = p.addConstr(WA[0] == quicksum(H[0,j] * A_c[j] for j in range(c)))
-    # agua de lluvia considera los terrenos agricoals utilizados mas el terreno urbano
+    # agua de lluvia considera los terrenos agricolas utilizados mas el terreno urbano
 restr_14 = p.addConstrs(W[i] == W[i-1] * 0.1 + WL[i] * 10 * (quicksum(H[i, j] for j in range(c)) + 5250.51) + WS[i] + WR[i] - WA[i] - WA[i-1] - WI - WP[i] for i in range(1, t))
 
 # Restriccion 15 Respetar producción de agua potable, min 120 lts/dia, max 150 lts/dia, produccion de agua potable < capacidad plantas potables + agua recuperada
-restr_15_arriba = p.addConstrs(0.12 * Pob[i] * 365 <= WP[i] for i in range(1, t))
-restr_15_abajo = p.addConstrs(0.15 * Pob[i] * 365 >= WP[i] for i in range(1, t))
+restr_15_abajo = p.addConstrs(0.12 * Pob[i] * 365 <= WP[i] for i in range(1, t))
+restr_15_arriba = p.addConstrs(0.15 * Pob[i] * 365 >= WP[i] for i in range(1, t))
 restr_15_prod = p.addConstrs(WP[i] <= 365 * CPP[i] + WR[i] for i in range(1, t))
 
 # Restriccion 16 Respetar conexión a alcantarillas (Mínimo 60% de las casas y si se construyeron no se pueden sacar)
-# CAMBIO EN LA DEFINICION DE QCA Y EN EL LIMITE SUPERIOR
 restr_16 = p.addConstr(QCA[0] == 0.6 * QC[0])
 restr_16_abajo = p.addConstrs(QCA[i] >=  0.6 * QC[i]  for i in range(1, t))
 restr_16_arriba = p.addConstrs(QCA[i] <=  QC[i] for i in range(1, t))
@@ -243,7 +230,6 @@ restr_16_arriba = p.addConstrs(QCA[i] <=  QC[i] for i in range(1, t))
 restr_16_1 = p.addConstrs(QCA[i] >= QCA[i - 1] for i in range(1, t))
 
 # Restriccion 17 Agua total recuperada por la planta de Aguas Servidas
-# CAMBIA LA RELACION ENTRE QCA/QC POR LO QUE EL 0.6 DEBERIA CAMBIAR
 restr_17_abajo = p.addConstrs(WR[i] >= 0.8 * WP[i] * 0.6 for i in range(1, t))
 restr_17_arriba = p.addConstrs(WR[i] <= 0.8 * WP[i] for i in range(1, t))
 restr_17_prod = p.addConstrs(WR[i] <= 365 * CPA[i]  for i in range(t))
@@ -256,16 +242,17 @@ restr_18 = p.addConstrs(CPP[i] == CPP[i-1] + 60 * X[i] * 24 for i in range(1, t)
 restr_19_0 = p.addConstr(CPA[0] == 2765)
 restr_19 = p.addConstrs(CPA[i] == CPA[i-1] + 60 * Y[i] * 24 for i in range(1, t))
 
-# Restriccion 20 Aporte de aguas subterraneas
+# Restriccion 20 Aporte de aguas subterraneas. Está limitada a un valor entregado por enunciado
 restr_20 = p.addConstrs(WS[i] <= 450 * 8640 for i in range(1, t))
 
-# Restriccion 21 Asegurar agua potable para prox año
+# Restriccion 21 Asegurar agua potable para proximo año
 restr_21_a = p.addConstrs(W[i] >= WP[i-1] for i in range(1, t))
 
 # Restriccion 22 Limitar consumo agua en agricultura
 restr_21_b = p.addConstrs(WA[i] <= 150000000 for i in range(1, t))
 
 # Restriccion 22 Precio del cultivo c el periodo t
+# El precio del cultivo c para el periodo t es el precio del año anterior mas la variación porcentual de este para ese año
 restr_22_0 = p.addConstrs(Precio[0,j] == precio_ton[j] for j in range(c))
 restrr_22 = p.addConstrs(Precio[i,j] == Precio[i-1, j] * (round(1 + ((var_precio[i-1][j][1] - var_precio[i-1][j][0]) * vau + var_precio[i-1][j][0])/100,2)) for j in range(c) for i in range(1, t))
 
@@ -324,11 +311,12 @@ p.optimize()
 p.printAttr('X')
 
 
-
+# Codigo para exportar los resultados del problema a un archivo .txt
 with open('resultados.txt', 'w', encoding='utf-8') as file:
     for v in p.getVars():
         file.write('%s %g \n' % (v.varName, v.x))
 
+# Codigo para exportar cada variable por separado en un achivo .txt
 lista = []
 for i in range(27):
     lista.append([])
