@@ -20,4 +20,13 @@ La quinta parte corresponde a correr el modelo utilizando Gurobi y se exportan l
 
 Ya que la variación de los precios es determinística, al momento de ejecutar el archivo hay que definir el valor que estos van a tomar. Para realizar esto se debe modificar el valor del parametro `vau` (linea 29 del código), entre 0 y 1.
  
-Luego, si se utilizan las variaciones de precios entregadas por enunciados, no hay que hacer ningún cambio. Por el contrario, si deciden aplicar el impuesto a las paltas hay que hacer una modificació, utilizar la matriz llamada `var_precio_impuesto_paltas`. Para esto, en la restricción 22 (linea 257 del código), hay que cambiar el uso del parámetro  `var_precio` por `var_precio_impuesto_paltas`.
+Luego, si se utilizan las variaciones de precios entregadas por enunciados, no hay que hacer ningún cambio. Por el contrario, si deciden aplicar el impuesto a las paltas hay que hacer una modificación, utilizar la matriz llamada `var_precio_impuesto_paltas`. Para esto, en la restricción 22 (linea 257 del código), hay que cambiar el uso del parámetro  `var_precio` por `var_precio_impuesto_paltas`.
+
+## INCERTIDUMBRE DE PRECIOS
+
+para la incertidumbre en precios se trabajó con 4 escenarios, para replicar estos escenarios se debe modificar la variable vau:
+
+1. Peor Caso: vau=0
+2. Mejor Caso: vau=1
+3. Caso promedio: vau=0.5
+4. Caso promedio con impuestos en paltas: Cambiar el uso del parámetro  `var_precio` por `var_precio_impuesto_paltas` tal como se indica más arriba.
