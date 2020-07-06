@@ -18,6 +18,6 @@ La quinta parte corresponde a correr el modelo utilizando Gurobi y se exportan l
 
 ## Ejecución del archivo
 
-Ya que la variación de los precios es determinística, al momento de ejecutar el archivo hay que definir el valor que estos van a tomar. Para realizar esto se debe modificar el valor del parametro `vau`(linea 29 del código), entre 0 y 1.
+Ya que la variación de los precios es determinística, al momento de ejecutar el archivo hay que definir el valor que estos van a tomar. Para realizar esto se debe modificar el valor del parametro `vau` (linea 29 del código), entre 0 y 1.
  
 Luego, si se utilizan las variaciones de precios entregadas por enunciados, no hay que hacer ningún cambio. Por el contrario, si deciden aplicar el impuesto a las paltas hay que hacer una modificació, utilizar la matriz llamada `var_precio_impuesto_paltas`. Para esto, en la restricción 22 (linea 257 del código), hay que cambiar el uso de las variables `var_precio(...)` por `var_precio_impuesto_paltas(...)`.
